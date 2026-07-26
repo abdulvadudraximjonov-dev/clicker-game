@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Dynamic Level Clicker</title>
+    <title>Ultimate Clicker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -64,8 +64,8 @@
 
         /* Tanga / Rasm tugmasi */
         .coin-btn {
-            width: 190px;
-            height: 190px;
+            width: 180px;
+            height: 180px;
             border-radius: 50%;
             background: radial-gradient(circle, #f39c12 0%, #d35400 100%);
             border: 8px solid #f1c40f;
@@ -73,7 +73,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 75px;
+            font-size: 70px;
             cursor: pointer;
             transition: transform 0.1s ease;
             position: relative;
@@ -92,10 +92,11 @@
             transform: scale(0.92);
         }
 
-        /* Do'kon Boostlari */
+        /* Do'kon Boostlari (2x2 grid) */
         .shop-container {
-            display: flex;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
             width: 90%;
         }
 
@@ -103,13 +104,12 @@
             background: #27ae60;
             color: white;
             border: none;
-            padding: 10px 5px;
+            padding: 8px 4px;
             border-radius: 12px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            flex: 1;
         }
 
         .btn-shop:active {
@@ -195,8 +195,10 @@
     <label for="image-input" class="upload-btn" id="upload-label">🖼️ Rasm qo'yish (50k)</label>
 
     <div class="shop-container">
-        <button class="btn-shop" onclick="buyMultitap()">⚡ Boost Tap (+1)<br><small><span id="boost-price">500</span> tanga</small></button>
+        <button class="btn-shop" onclick="buyMultitap()">⚡ Tap (+1)<br><small><span id="boost-price">500</span> tanga</small></button>
         <button class="btn-shop" onclick="buyAutoClicker()">🤖 Auto-Bot (<span id="auto-status">0/s</span>)<br><small><span id="auto-price">1000</span> tanga</small></button>
+        <button class="btn-shop" onclick="buyEnergyLimit()">🔋 Energy Limit (+500)<br><small><span id="elimit-price">500</span> tanga</small></button>
+        <button class="btn-shop" onclick="buyRechargeSpeed()">⚡ Tiklanish (+1/s)<br><small><span id="erecharge-price">300</span> tanga</small></button>
     </div>
 
     <div class="energy-container">
@@ -208,24 +210,24 @@
 
     <script>
         let score = parseInt(localStorage.getItem('h_score')) || 0;
-        let bonusPower = parseInt(localStorage.getItem('h_bpower')) || 0; // Sotib olingan qo'shimcha kuch
+        let bonusPower = parseInt(localStorage.getItem('h_bpower')) || 0;
+        let maxEnergy = parseInt(localStorage.getItem('h_maxenergy')) || 1000;
+        let energy = parseInt(localStorage.getItem('h_energy')) || maxEnergy;
+        let rechargeSpeed = parseInt(localStorage.getItem('h_recharge')) || 3;
+
         let boostPrice = parseInt(localStorage.getItem('h_bprice')) || 500;
         let autoPrice = parseInt(localStorage.getItem('h_aprice')) || 1000;
+        let elimitPrice = parseInt(localStorage.getItem('h_elprice')) || 500;
+        let erechargePrice = parseInt(localStorage.getItem('h_erprice')) || 300;
         let autoLevel = parseInt(localStorage.getItem('h_autolvl')) || 0;
         let customImage = localStorage.getItem('h_custom_img') || null;
 
-        // DARAJA TALABLARI:
-        // Level 1: 0 - 2,500 ball
-        // Level 2: 2,500 - 10,000 ball
-        // Level 3: 10,000 - 25,000 ball
-        // Level 4: 25,000 - 50,000 ball
-        // Level 5: 50,000+ ball
         const levels = [
-            { name: "Bronze 🥉", req: 2500, tapPower: 1 },
-            { name: "Silver 🥈", req: 10000, tapPower: 2 },
-            { name: "Gold 🥇", req: 25000, tapPower: 3 },
-            { name: "Platinum 💎", req: 50000, tapPower: 4 },
-            { name: "Legendary 👑", req: 100000, tapPower: 5 }
+            { name: "Bronze 🥉", req: 2500 },
+            { name: "Silver 🥈", req: 10000 },
+            { name: "Gold 🥇", req: 25000 },
+            { name: "Platinum 💎", req: 50000 },
+            { name: "Legendary 👑", req: 100000 }
         ];
 
         let currentLvlIndex = 0;
@@ -249,7 +251,7 @@
         }
 
         function updateUI() {
-            // Levelni aniqlash
+            // Level hisobi
             currentLvlIndex = 0;
             let prevReq = 0;
             for (let i = 0; i < levels.length; i++) {
@@ -265,12 +267,8 @@
             levelNameEl.innerText = levels[lvlIdx].name;
             levelNumEl.innerText = currentLvlIndex + 1;
 
-            // BOSH BOSISH KUCHI (Level 1 da 1, Level 2 ga o'tganda (2500 ball) 2 bo'ladi) + sotib olingan bonus
+            // Bosganda beriladigan tanga
             tapPower = (currentLvlIndex + 1) + bonusPower;
-
-            // Energiyani hisoblash
-            let baseMaxEnergy = 1000;
-            let maxEnergy = baseMaxEnergy + Math.floor(score / 1000) * 100;
 
             scoreEl.innerText = score.toLocaleString();
             energyEl.innerText = energy;
@@ -279,6 +277,8 @@
             
             document.getElementById('boost-price').innerText = boostPrice.toLocaleString();
             document.getElementById('auto-price').innerText = autoPrice.toLocaleString();
+            document.getElementById('elimit-price').innerText = elimitPrice.toLocaleString();
+            document.getElementById('erecharge-price').innerText = erechargePrice.toLocaleString();
             
             if (autoLevel > 0) {
                 document.getElementById('auto-status').innerText = '+' + autoLevel + '/s';
@@ -289,7 +289,7 @@
             let progress = Math.min(100, Math.max(0, ((score - prevReq) / (nextReq - prevReq)) * 100));
             levelFillEl.style.width = progress + '%';
 
-            // 50,000 BALDA RASM MIKRONI OCHISH
+            // 50k ball
             if (score >= 50000) {
                 uploadLabel.style.display = 'inline-block';
                 if (customImage) {
@@ -305,12 +305,17 @@
 
             localStorage.setItem('h_score', score);
             localStorage.setItem('h_energy', energy);
+            localStorage.setItem('h_maxenergy', maxEnergy);
+            localStorage.setItem('h_recharge', rechargeSpeed);
             localStorage.setItem('h_bpower', bonusPower);
             localStorage.setItem('h_bprice', boostPrice);
             localStorage.setItem('h_aprice', autoPrice);
+            localStorage.setItem('h_elprice', elimitPrice);
+            localStorage.setItem('h_erprice', erechargePrice);
             localStorage.setItem('h_autolvl', autoLevel);
         }
 
+        // 1. Multitap
         function buyMultitap() {
             if (score >= boostPrice) {
                 score -= boostPrice;
@@ -320,11 +325,33 @@
             } else { alert("Tangalar yetarli emas!"); }
         }
 
+        // 2. Auto Clicker
         function buyAutoClicker() {
             if (score >= autoPrice) {
                 score -= autoPrice;
                 autoLevel += 1;
                 autoPrice = Math.floor(autoPrice * 2.5);
+                updateUI();
+            } else { alert("Tangalar yetarli emas!"); }
+        }
+
+        // 3. Energiya sig'imini oshirish (+500 Energiya)
+        function buyEnergyLimit() {
+            if (score >= elimitPrice) {
+                score -= elimitPrice;
+                maxEnergy += 500;
+                energy += 500;
+                elimitPrice = Math.floor(elimitPrice * 2);
+                updateUI();
+            } else { alert("Tangalar yetarli emas!"); }
+        }
+
+        // 4. Tiklanish tezligini oshirish
+        function buyRechargeSpeed() {
+            if (score >= erechargePrice) {
+                score -= erechargePrice;
+                rechargeSpeed += 1;
+                erechargePrice = Math.floor(erechargePrice * 2);
                 updateUI();
             } else { alert("Tangalar yetarli emas!"); }
         }
@@ -382,17 +409,13 @@
             setTimeout(() => { el.remove(); }, 800);
         }
 
-        let baseMaxEnergy = 1000;
-        let maxEnergy = baseMaxEnergy + Math.floor(score / 1000) * 100;
-        let energy = parseInt(localStorage.getItem('h_energy')) || maxEnergy;
-
+        // Auto-bot va energiya tiklanishi
         setInterval(() => {
-            let currentMaxEnergy = baseMaxEnergy + Math.floor(score / 1000) * 100;
             if (autoLevel > 0) {
                 score += autoLevel;
             }
-            if (energy < currentMaxEnergy) {
-                energy = Math.min(currentMaxEnergy, energy + 3);
+            if (energy < maxEnergy) {
+                energy = Math.min(maxEnergy, energy + rechargeSpeed);
             }
             updateUI();
         }, 1000);
@@ -401,3 +424,4 @@
     </script>
 </body>
 </html>
+
