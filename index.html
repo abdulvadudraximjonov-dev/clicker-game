@@ -15,7 +15,6 @@
         
         .header { text-align: center; width: 100%; margin-top: 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         
-        /* Profil va Avatar qismi */
         .profile-container { display: flex; align-items: center; gap: 12px; background: #1e293b; padding: 8px 15px; border-radius: 15px; border: 1px solid #334155; width: 100%; max-width: 360px; }
         .avatar-box { width: 50px; height: 50px; border-radius: 50%; background: #334155; overflow: hidden; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 2px solid #38bdf8; flex-shrink: 0; }
         .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
@@ -172,9 +171,8 @@
     </div>
 
     <script>
-        // Supabase sozlamalari
         const SUPABASE_URL = 'https://pwfuwffjrsduxdvgwsyt.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_-XoeLp...'; // O'zingizning kalitingiz shu yerda turadi
+        const SUPABASE_ANON_KEY = 'sb_publishable_-XoeLpQYx0oWzK5KqW5KqW5';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let tgUser = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user;
@@ -196,7 +194,6 @@
         let lastDaily = parseInt(localStorage.getItem('lastDaily')) || 0;
         let task1Done = localStorage.getItem('task1Done') === 'true';
 
-        // Saqlangan avatarni yuklash
         let savedAvatar = localStorage.getItem('userAvatar');
         if (savedAvatar) {
             document.getElementById('avatar-img').src = savedAvatar;
@@ -204,7 +201,6 @@
             document.getElementById('avatar-emoji').style.display = 'none';
         }
 
-        // Galereyadan rasm yuklash funksiyasi
         function loadAvatar(event) {
             const file = event.target.files[0];
             if (file) {
@@ -368,37 +364,53 @@
                 updateUI();
                 syncWithSupabase();
                 alert("Kunlik bonus olindi!");
-                 function copyRefLink() {
-            navigator.clipboard.writeText("https://t.me/anime_team_01_bot?start=ref");
-            alert("Havola nusxalandi!");
-        }
-
-        let adminClicks = 0;
-        let adminTimer;
-        function openAdminModal() {
-            adminClicks++;
-            clearTimeout(adminTimer);
-            adminTimer = setTimeout(() => { adminClicks = 0; }, 1500);
-            if (adminClicks >= 5) {
-                adminClicks = 0;
-                document.getElementById('admin-modal').style.display = 'flex';
             }
         }
-        function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
-        function adminAddCoins() { score += 100000; updateUI(); syncWithSupabase(); closeAdminModal(); }
-        function adminMaxEnergy() { energy = maxEnergy; updateUI(); closeAdminModal(); }
-
-        setInterval(() => {
-            if (energy < maxEnergy) energy = Math.min(maxEnergy, energy + 1);
-            if (autoLevel > 0) {
-                score += autoLevel;
-                syncWithSupabase();
-            }
+        function completeTask(reward) {
+            if (!task1Done) {
+                score += reward;
+                task1Done = true;
+                updateUI();
+        function completeTask(reward) {
+        if (!task1Done) {
+            score += reward;
+            task1Done = true;
             updateUI();
-        }, 1000);
+            syncWithSupabase();
+            alert("Vazifa bajarildi!");
+        }
+    }
+    function copyRefLink() {
+        navigator.clipboard.writeText("https://t.me/anime_team_01_bot?start=ref");
+        alert("Havola nusxalandi!");
+    }
 
+    let adminClicks = 0;
+    let adminTimer;
+    function openAdminModal() {
+        adminClicks++;
+        clearTimeout(adminTimer);
+        adminTimer = setTimeout(() => { adminClicks = 0; }, 1500);
+        if (adminClicks >= 5) {
+            adminClicks = 0;
+            document.getElementById('admin-modal').style.display = 'flex';
+        }
+    }
+    function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
+    function adminAddCoins() { score += 100000; updateUI(); syncWithSupabase(); closeAdminModal(); }
+    function adminMaxEnergy() { energy = maxEnergy; updateUI(); closeAdminModal(); }
+
+    setInterval(() => {
+        if (energy < maxEnergy) energy = Math.min(maxEnergy, energy + 1);
+        if (autoLevel > 0) {
+            score += autoLevel;
+            syncWithSupabase();
+        }
         updateUI();
-        syncWithSupabase();
-    </script>
+    }, 1000);
+
+    updateUI();
+    syncWithSupabase();
+</script>
 </body>
 </html>
