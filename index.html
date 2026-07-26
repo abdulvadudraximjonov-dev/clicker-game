@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Hamster Clicker</title>
+    <title>Custom Image Clicker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -17,33 +17,31 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            padding: 20px 0;
+            padding: 15px 0;
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
             overflow: hidden;
         }
 
-        .score-container {
-            margin-top: 20px;
-        }
-
-        .score-title {
-            font-size: 18px;
-            color: #aaaaaa;
+        .level-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 5px;
         }
 
         .score-value {
-            font-size: 48px;
+            font-size: 44px;
             font-weight: bold;
             color: #f1c40f;
             text-shadow: 0 0 15px rgba(241, 196, 15, 0.5);
         }
 
-        /* Tanga tugmasi */
+        /* Tanga / Rasm tugmasi */
         .coin-btn {
-            width: 200px;
-            height: 200px;
+            width: 210px;
+            height: 210px;
             border-radius: 50%;
             background: radial-gradient(circle, #f39c12 0%, #d35400 100%);
             border: 8px solid #f1c40f;
@@ -55,22 +53,44 @@
             cursor: pointer;
             transition: transform 0.1s ease;
             position: relative;
+            overflow: hidden;
+        }
+
+        .coin-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            display: none;
         }
 
         .coin-btn:active {
             transform: scale(0.92);
         }
 
+        /* Galereyadan rasm yuklash tugmasi */
+        .upload-btn {
+            background: linear-gradient(45deg, #e74c3c, #8e44ad);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none; /* 50,000 balldan keyin ko'rinadi */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            border: 2px solid #fff;
+            margin-top: 10px;
+        }
+
         /* Energiya paneli */
         .energy-container {
             width: 80%;
-            margin-bottom: 20px;
         }
 
         .energy-text {
-            font-size: 18px;
-            margin-bottom: 8px;
-            color: #ffffff;
+            font-size: 16px;
+            margin-bottom: 6px;
         }
 
         .energy-bar {
@@ -89,7 +109,7 @@
             transition: width 0.2s ease;
         }
 
-        /* Uchib chiqadigan +1 effekti */
+        /* Uchuvchi sonlar */
         .float-text {
             position: absolute;
             font-size: 32px;
@@ -101,27 +121,25 @@
         }
 
         @keyframes floatUp {
-            0% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-80px);
-            }
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-80px); }
         }
     </style>
 </head>
 <body>
 
-    <div class="score-container">
-        <div class="score-title">Jami tangalar</div>
+    <div>
+        <div class="level-title" id="level-name">Bronze Hamster 🥉</div>
         <div class="score-value" id="score">0</div>
     </div>
 
     <div class="coin-btn" id="coin">
-        🐹
+        <span id="coin-emoji">🐹</span>
+        <img id="coin-img" src="" alt="Custom Image">
     </div>
+
+    <input type="file" id="image-input" accept="image/*" style="display: none;">
+    <label for="image-input" class="upload-btn" id="upload-label">🖼️ Galereyadan rasm qo'yish</label>
 
     <div class="energy-container">
         <div class="energy-text">⚡ <span id="energy">1000</span> / 1000</div>
@@ -131,16 +149,21 @@
     </div>
 
     <script>
-        let score = parseInt(localStorage.getItem('hamster_score')) || 0;
-        let energy = parseInt(localStorage.getItem('hamster_energy')) || 1000;
+        let score = parseInt(localStorage.getItem('h_score')) || 0;
+        let energy = parseInt(localStorage.getItem('h_energy')) || 1000;
+        let customImage = localStorage.getItem('h_custom_img') || null;
         const maxEnergy = 1000;
 
         const scoreEl = document.getElementById('score');
         const energyEl = document.getElementById('energy');
         const energyFillEl = document.getElementById('energy-fill');
         const coinEl = document.getElementById('coin');
+        const coinEmoji = document.getElementById('coin-emoji');
+        const coinImg = document.getElementById('coin-img');
+        const levelNameEl = document.getElementById('level-name');
+        const uploadLabel = document.getElementById('upload-label');
+        const imageInput = document.getElementById('image-input');
 
-        // Telegram WebApp ni kengaytirish
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.expand();
         }
@@ -149,10 +172,44 @@
             scoreEl.innerText = score.toLocaleString();
             energyEl.innerText = energy;
             energyFillEl.style.width = (energy / maxEnergy * 100) + '%';
-            
-            localStorage.setItem('hamster_score', score);
-            localStorage.setItem('hamster_energy', energy);
+
+            // 50,000 BALGA YETGANDA:
+            if (score >= 50000) {
+                uploadLabel.style.display = 'inline-block'; // Rasm yuklash tugmasi chiqadi
+                levelNameEl.innerText = "LEGENDARY HAMSTER 👑";
+                levelNameEl.style.color = "#f1c40f";
+
+                if (customImage) {
+                    coinEmoji.style.display = 'none';
+                    coinImg.src = customImage;
+                    coinImg.style.display = 'block';
+                }
+            } else {
+                uploadLabel.style.display = 'none';
+                coinEmoji.style.display = 'block';
+                coinImg.style.display = 'none';
+                levelNameEl.innerText = "Bronze Hamster 🥉";
+            }
+
+            localStorage.setItem('h_score', score);
+            localStorage.setItem('h_energy', energy);
         }
+
+        // Galereyadan rasm tanlanganida bajariladigan ish
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    customImage = event.target.result;
+                    localStorage.setItem('h_custom_img', customImage);
+                    coinEmoji.style.display = 'none';
+                    coinImg.src = customImage;
+                    coinImg.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
 
         coinEl.addEventListener('touchstart', function(e) {
             e.preventDefault();
@@ -171,31 +228,27 @@
             if (energy > 0) {
                 score += 1;
                 energy -= 1;
-                
-                // Vibratsiya (Telegram xususiyati)
+
                 if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
                     window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
                 }
 
-                createFloatingText(x, y);
+                createFloatingText(x, y, '+1');
                 updateUI();
             }
         }
 
-        function createFloatingText(x, y) {
+        function createFloatingText(x, y, text) {
             const el = document.createElement('div');
             el.className = 'float-text';
-            el.innerText = '+1';
+            el.innerText = text;
             el.style.left = (x - 15) + 'px';
             el.style.top = (y - 30) + 'px';
             document.body.appendChild(el);
 
-            setTimeout(() => {
-                el.remove();
-            }, 800);
+            setTimeout(() => { el.remove(); }, 800);
         }
 
-        // Energiyani asta-sekin qayta tiklash (har soniyada +3 energiya)
         setInterval(() => {
             if (energy < maxEnergy) {
                 energy = Math.min(maxEnergy, energy + 3);
@@ -207,4 +260,3 @@
     </script>
 </body>
 </html>
-
