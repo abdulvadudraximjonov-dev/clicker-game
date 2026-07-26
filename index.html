@@ -3,212 +3,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Ultimate Clicker</title>
+    <title>Ultimate Telegram Clicker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        * { box-sizing: border-box; }
         body {
             background: radial-gradient(circle, #2c3e50 0%, #000000 100%);
             color: white;
             font-family: 'Arial', sans-serif;
             text-align: center;
+            height: 100vh;
+            margin: 0;
+            padding: 10px 0 60px 0;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            padding: 15px 0;
-            box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
             overflow: hidden;
         }
 
-        /* Level va progress bar */
-        .level-container {
-            width: 85%;
+        .tab-content {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
         }
+        .tab-content.active { display: flex; }
 
+        /* Level va Progress Bar */
+        .level-container { width: 85%; }
         .level-info {
             display: flex;
             justify-content: space-between;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
             margin-bottom: 5px;
             color: #3498db;
         }
-
         .level-bar {
-            width: 100%;
-            height: 10px;
+            width: 100%; height: 10px;
             background-color: #333;
             border-radius: 10px;
             overflow: hidden;
             border: 1px solid #555;
         }
-
         .level-fill {
-            width: 0%;
-            height: 100%;
+            width: 0%; height: 100%;
             background: linear-gradient(90deg, #2980b9, #2ecc71);
             transition: width 0.3s ease;
         }
-
         .score-value {
-            font-size: 42px;
-            font-weight: bold;
+            font-size: 40px; font-weight: bold;
             color: #f1c40f;
             text-shadow: 0 0 15px rgba(241, 196, 15, 0.5);
             margin-top: 5px;
         }
 
-        /* Tanga / Rasm tugmasi */
+        /* Tanga / Rasm */
         .coin-btn {
-            width: 180px;
-            height: 180px;
+            width: 170px; height: 170px;
             border-radius: 50%;
             background: radial-gradient(circle, #f39c12 0%, #d35400 100%);
             border: 8px solid #f1c40f;
             box-shadow: 0 0 30px rgba(241, 196, 15, 0.4);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 70px;
-            cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 70px; cursor: pointer;
             transition: transform 0.1s ease;
-            position: relative;
-            overflow: hidden;
+            position: relative; overflow: hidden;
         }
-
         .coin-btn img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-            display: none;
+            width: 100%; height: 100%;
+            object-fit: cover; border-radius: 50%; display: none;
         }
+        .coin-btn:active { transform: scale(0.92); }
 
-        .coin-btn:active {
-            transform: scale(0.92);
-        }
-
-        /* Do'kon Boostlari (2x2 grid) */
+        /* Boostlar Grid */
         .shop-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            width: 90%;
+            gap: 8px; width: 90%;
         }
-
         .btn-shop {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 8px 4px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
+            background: #27ae60; color: white;
+            border: none; padding: 8px 4px;
+            border-radius: 12px; font-size: 11px;
+            font-weight: bold; cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
+        .btn-shop:active { transform: scale(0.95); }
 
-        .btn-shop:active {
-            transform: scale(0.95);
-        }
-
-        /* Rasm yuklash */
         .upload-btn {
             background: linear-gradient(45deg, #e74c3c, #8e44ad);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 15px;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            display: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            border: 2px solid #fff;
+            color: white; padding: 6px 14px;
+            border-radius: 15px; font-size: 12px;
+            font-weight: bold; cursor: pointer; display: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: 2px solid #fff;
         }
 
-        /* Energiya paneli */
-        .energy-container {
-            width: 85%;
-        }
-
-        .energy-text {
-            font-size: 15px;
-            margin-bottom: 5px;
-        }
-
+        /* Energiya */
+        .energy-container { width: 85%; }
+        .energy-text { font-size: 14px; margin-bottom: 4px; }
         .energy-bar {
-            width: 100%;
-            height: 12px;
-            background-color: #333;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid #555;
+            width: 100%; height: 12px;
+            background-color: #333; border-radius: 10px;
+            overflow: hidden; border: 1px solid #555;
         }
-
         .energy-fill {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             background: linear-gradient(90deg, #f1c40f, #e67e22);
             transition: width 0.2s ease;
         }
 
         /* Uchuvchi sonlar */
         .float-text {
-            position: absolute;
-            font-size: 32px;
-            font-weight: bold;
-            color: #ffffff;
+            position: absolute; font-size: 30px;
+            font-weight: bold; color: #ffffff;
             pointer-events: none;
             animation: floatUp 0.8s ease-out forwards;
             text-shadow: 0 0 5px rgba(0,0,0,0.8);
         }
-
         @keyframes floatUp {
             0% { opacity: 1; transform: translateY(0); }
             100% { opacity: 0; transform: translateY(-80px); }
         }
+
+        /* Pastki Menyu (Bottom Navigation) */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: 55px; background: #111;
+            display: flex; justify-content: space-around;
+            align-items: center; border-top: 1px solid #333;
+            z-index: 100;
+        }
+        .nav-btn {
+            background: none; border: none; color: #888;
+            font-size: 11px; font-weight: bold;
+            display: flex; flex-direction: column;
+            align-items: center; cursor: pointer;
+        }
+        .nav-btn span { font-size: 18px; margin-bottom: 2px; }
+        .nav-btn.active { color: #f1c40f; }
+
+        /* Boshqa Bo'limlar Visual Style */
+        .page-title { font-size: 22px; font-weight: bold; color: #f1c40f; margin-top: 10px; }
+        .list-container { width: 90%; margin-top: 15px; overflow-y: auto; max-height: 70vh; }
+        .list-item {
+            background: rgba(255, 255, 255, 0.08);
+            margin-bottom: 10px; padding: 12px;
+            border-radius: 12px; display: flex;
+            justify-content: space-between; align-items: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .list-btn {
+            background: #f1c40f; color: #000;
+            border: none; padding: 6px 12px;
+            border-radius: 8px; font-weight: bold; cursor: pointer;
+        }
+        .list-btn:disabled { background: #555; color: #aaa; }
     </style>
 </head>
 <body>
 
-    <div class="level-container">
-        <div class="level-info">
-            <span id="level-name">Bronze 🥉</span>
-            <span>Lv. <span id="level-num">1</span>/5</span>
+    <div id="tab-game" class="tab-content active">
+        <div class="level-container">
+            <div class="level-info">
+                <span id="level-name">Bronze 🥉</span>
+                <span>Lv. <span id="level-num">1</span>/5</span>
+            </div>
+            <div class="level-bar"><div class="level-fill" id="level-fill"></div></div>
+            <div class="score-value" id="score">0</div>
         </div>
-        <div class="level-bar">
-            <div class="level-fill" id="level-fill"></div>
+
+        <div class="coin-btn" id="coin">
+            <span id="coin-emoji">🐹</span>
+            <img id="coin-img" src="" alt="Custom Image">
         </div>
-        <div class="score-value" id="score">0</div>
+
+        <input type="file" id="image-input" accept="image/*" style="display: none;">
+        <label for="image-input" class="upload-btn" id="upload-label">🖼️ Rasm qo'yish (50k)</label>
+
+        <div class="shop-container">
+            <button class="btn-shop" onclick="buyMultitap()">⚡ Tap (+1)<br><small><span id="boost-price">500</span> tanga</small></button>
+            <button class="btn-shop" onclick="buyAutoClicker()">🤖 Auto-Bot (<span id="auto-status">0/s</span>)<br><small><span id="auto-price">1000</span> tanga</small></button>
+            <button class="btn-shop" onclick="buyEnergyLimit()">🔋 Energy (+500)<br><small><span id="elimit-price">500</span> tanga</small></button>
+            <button class="btn-shop" onclick="buyRechargeSpeed()">⚡ Tiklanish (+1/s)<br><small><span id="erecharge-price">300</span> tanga</small></button>
+        </div>
+
+        <div class="energy-container">
+            <div class="energy-text">⚡ <span id="energy">1000</span> / <span id="max-energy">1000</span></div>
+            <div class="energy-bar"><div class="energy-fill" id="energy-fill"></div></div>
+        </div>
     </div>
 
-    <div class="coin-btn" id="coin">
-        <span id="coin-emoji">🐹</span>
-        <img id="coin-img" src="" alt="Custom Image">
-    </div>
-
-    <input type="file" id="image-input" accept="image/*" style="display: none;">
-    <label for="image-input" class="upload-btn" id="upload-label">🖼️ Rasm qo'yish (50k)</label>
-
-    <div class="shop-container">
-        <button class="btn-shop" onclick="buyMultitap()">⚡ Tap (+1)<br><small><span id="boost-price">500</span> tanga</small></button>
-        <button class="btn-shop" onclick="buyAutoClicker()">🤖 Auto-Bot (<span id="auto-status">0/s</span>)<br><small><span id="auto-price">1000</span> tanga</small></button>
-        <button class="btn-shop" onclick="buyEnergyLimit()">🔋 Energy Limit (+500)<br><small><span id="elimit-price">500</span> tanga</small></button>
-        <button class="btn-shop" onclick="buyRechargeSpeed()">⚡ Tiklanish (+1/s)<br><small><span id="erecharge-price">300</span> tanga</small></button>
-    </div>
-
-    <div class="energy-container">
-        <div class="energy-text">⚡ <span id="energy">1000</span> / <span id="max-energy">1000</span></div>
-        <div class="energy-bar">
-            <div class="energy-fill" id="energy-fill"></div>
+    <div id="tab-tasks" class="tab-content">
+        <div class="page-title">📋 Vazifalar</div>
+        <div class="list-container">
+            <div class="list-item">
+                <div style="text-align: left;">
+                    <b>📢 Telegram kanal</b><br><small>+5,000 tanga</small>
+                </div>
+                <button class="list-btn" id="task1-btn" onclick="completeTask(1, 5000)">Bajarish</button>
+            </div>
+            <div class="list-item">
+                <div style="text-align: left;">
+                    <b>👥 Do'stlarni taklif qilish</b><br><small>Ref-link orqali: +10,000</small>
+                </div>
+                <button class="list-btn" onclick="copyRefLink()">Nusxalash</button>
+            </div>
         </div>
+    </div>
+
+    <div id="tab-daily" class="tab-content">
+        <div class="page-title">📅 Kundalik Bonus</div>
+        <p style="font-size: 14px; color: #ccc;">Har kuni kiring va tekin tangalarga ega bo'ling!</p>
+        <div class="list-container">
+            <div class="list-item">
+                <div style="text-align: left;"><b>🎁 Bugungi bonus</b><br><small>+2,500 tanga</small></div>
+                <button class="list-btn" id="daily-btn" onclick="claimDailyReward()">Olish</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-leaders" class="tab-content">
+        <div class="page-title">🏆 Peshqadamlar</div>
+        <div class="list-container">
+            <div class="list-item"><span>🥇 1. Alex</span><b>1,250,000</b></div>
+            <div class="list-item"><span>🥈 2. Jamshid</span><b>890,000</b></div>
+            <div class="list-item"><span>🥉 3. Sardor</span><b>450,000</b></div>
+            <div class="list-item"><span id="user-rank">🏅 You</span><b id="user-leader-score">0</b></div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn active" onclick="switchTab('game', this)"><span>🎮</span>O'yin</button>
+        <button class="nav-btn" onclick="switchTab('tasks', this)"><span>📋</span>Vazifalar</button>
+        <button class="nav-btn" onclick="switchTab('daily', this)"><span>📅</span>Bonus</button>
+        <button class="nav-btn" onclick="switchTab('leaders', this)"><span>🏆</span>Reyting</button>
     </div>
 
     <script>
+        // Web Audio Synth - Ovoz effektlari yaratish
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playClickSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.05);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        // Ma'lumotlarni yuklash
         let score = parseInt(localStorage.getItem('h_score')) || 0;
         let bonusPower = parseInt(localStorage.getItem('h_bpower')) || 0;
         let maxEnergy = parseInt(localStorage.getItem('h_maxenergy')) || 1000;
@@ -222,6 +275,9 @@
         let autoLevel = parseInt(localStorage.getItem('h_autolvl')) || 0;
         let customImage = localStorage.getItem('h_custom_img') || null;
 
+        let lastDaily = localStorage.getItem('h_last_daily') || 0;
+        let task1Done = localStorage.getItem('h_task1') || false;
+
         const levels = [
             { name: "Bronze 🥉", req: 2500 },
             { name: "Silver 🥈", req: 10000 },
@@ -233,74 +289,74 @@
         let currentLvlIndex = 0;
         let tapPower = 1;
 
-        const scoreEl = document.getElementById('score');
-        const energyEl = document.getElementById('energy');
-        const maxEnergyEl = document.getElementById('max-energy');
-        const energyFillEl = document.getElementById('energy-fill');
-        const coinEl = document.getElementById('coin');
-        const coinEmoji = document.getElementById('coin-emoji');
-        const coinImg = document.getElementById('coin-img');
-        const levelNameEl = document.getElementById('level-name');
-        const levelNumEl = document.getElementById('level-num');
-        const levelFillEl = document.getElementById('level-fill');
-        const uploadLabel = document.getElementById('upload-label');
-        const imageInput = document.getElementById('image-input');
-
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.expand();
         }
 
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            btn.classList.add('active');
+            updateUI();
+        }
+
         function updateUI() {
-            // Level hisobi
             currentLvlIndex = 0;
             let prevReq = 0;
             for (let i = 0; i < levels.length; i++) {
                 if (score >= levels[i].req) {
                     currentLvlIndex = i + 1;
                     prevReq = levels[i].req;
-                } else {
-                    break;
-                }
+                } else break;
             }
 
             let lvlIdx = Math.min(currentLvlIndex, levels.length - 1);
-            levelNameEl.innerText = levels[lvlIdx].name;
-            levelNumEl.innerText = currentLvlIndex + 1;
+            document.getElementById('level-name').innerText = levels[lvlIdx].name;
+            document.getElementById('level-num').innerText = currentLvlIndex + 1;
 
-            // Bosganda beriladigan tanga
             tapPower = (currentLvlIndex + 1) + bonusPower;
 
-            scoreEl.innerText = score.toLocaleString();
-            energyEl.innerText = energy;
-            maxEnergyEl.innerText = maxEnergy.toLocaleString();
-            energyFillEl.style.width = Math.min(100, (energy / maxEnergy * 100)) + '%';
+            document.getElementById('score').innerText = score.toLocaleString();
+            document.getElementById('user-leader-score').innerText = score.toLocaleString();
+            document.getElementById('energy').innerText = energy;
+            document.getElementById('max-energy').innerText = maxEnergy.toLocaleString();
+            document.getElementById('energy-fill').style.width = Math.min(100, (energy / maxEnergy * 100)) + '%';
             
             document.getElementById('boost-price').innerText = boostPrice.toLocaleString();
             document.getElementById('auto-price').innerText = autoPrice.toLocaleString();
             document.getElementById('elimit-price').innerText = elimitPrice.toLocaleString();
             document.getElementById('erecharge-price').innerText = erechargePrice.toLocaleString();
             
-            if (autoLevel > 0) {
-                document.getElementById('auto-status').innerText = '+' + autoLevel + '/s';
-            }
+            if (autoLevel > 0) document.getElementById('auto-status').innerText = '+' + autoLevel + '/s';
 
-            // Progress bar
             let nextReq = levels[lvlIdx].req;
             let progress = Math.min(100, Math.max(0, ((score - prevReq) / (nextReq - prevReq)) * 100));
-            levelFillEl.style.width = progress + '%';
+            document.getElementById('level-fill').style.width = progress + '%';
 
-            // 50k ball
             if (score >= 50000) {
-                uploadLabel.style.display = 'inline-block';
+                document.getElementById('upload-label').style.display = 'inline-block';
                 if (customImage) {
-                    coinEmoji.style.display = 'none';
-                    coinImg.src = customImage;
-                    coinImg.style.display = 'block';
+                    document.getElementById('coin-emoji').style.display = 'none';
+                    document.getElementById('coin-img').src = customImage;
+                    document.getElementById('coin-img').style.display = 'block';
                 }
             } else {
-                uploadLabel.style.display = 'none';
-                coinEmoji.style.display = 'block';
-                coinImg.style.display = 'none';
+                document.getElementById('upload-label').style.display = 'none';
+                document.getElementById('coin-emoji').style.display = 'block';
+                document.getElementById('coin-img').style.display = 'none';
+            }
+
+            // Daily & Tasks status
+            const now = new Date().getTime();
+            if (now - lastDaily < 86400000) {
+                document.getElementById('daily-btn').disabled = true;
+                document.getElementById('daily-btn').innerText = "Olingan";
+            }
+
+            if (task1Done) {
+                document.getElementById('task1-btn').disabled = true;
+                document.getElementById('task1-btn').innerText = "Bajarilgan";
             }
 
             localStorage.setItem('h_score', score);
@@ -315,62 +371,68 @@
             localStorage.setItem('h_autolvl', autoLevel);
         }
 
-        // 1. Multitap
         function buyMultitap() {
             if (score >= boostPrice) {
-                score -= boostPrice;
-                bonusPower += 1;
-                boostPrice = Math.floor(boostPrice * 2.2);
-                updateUI();
-            } else { alert("Tangalar yetarli emas!"); }
+                score -= boostPrice; bonusPower += 1;
+                boostPrice = Math.floor(boostPrice * 2.2); updateUI();
+            } else alert("Tangalar yetarli emas!");
         }
 
-        // 2. Auto Clicker
         function buyAutoClicker() {
             if (score >= autoPrice) {
-                score -= autoPrice;
-                autoLevel += 1;
-                autoPrice = Math.floor(autoPrice * 2.5);
-                updateUI();
-            } else { alert("Tangalar yetarli emas!"); }
+                score -= autoPrice; autoLevel += 1;
+                autoPrice = Math.floor(autoPrice * 2.5); updateUI();
+            } else alert("Tangalar yetarli emas!");
         }
 
-        // 3. Energiya sig'imini oshirish (+500 Energiya)
         function buyEnergyLimit() {
             if (score >= elimitPrice) {
-                score -= elimitPrice;
-                maxEnergy += 500;
-                energy += 500;
-                elimitPrice = Math.floor(elimitPrice * 2);
-                updateUI();
-            } else { alert("Tangalar yetarli emas!"); }
+                score -= elimitPrice; maxEnergy += 500; energy += 500;
+                elimitPrice = Math.floor(elimitPrice * 2); updateUI();
+            } else alert("Tangalar yetarli emas!");
         }
 
-        // 4. Tiklanish tezligini oshirish
         function buyRechargeSpeed() {
             if (score >= erechargePrice) {
-                score -= erechargePrice;
-                rechargeSpeed += 1;
-                erechargePrice = Math.floor(erechargePrice * 2);
-                updateUI();
-            } else { alert("Tangalar yetarli emas!"); }
+                score -= erechargePrice; rechargeSpeed += 1;
+                erechargePrice = Math.floor(erechargePrice * 2); updateUI();
+            } else alert("Tangalar yetarli emas!");
         }
 
-        imageInput.addEventListener('change', function(e) {
+        function claimDailyReward() {
+            score += 2500;
+            localStorage.setItem('h_last_daily', new Date().getTime());
+            alert("Tabriklaymiz! +2,500 tanga olindi!");
+            updateUI();
+        }
+
+        function completeTask(id, reward) {
+            score += reward;
+            localStorage.setItem('h_task1', 'true');
+            task1Done = true;
+            alert("Vazifa bajarildi! +" + reward + " tanga!");
+            updateUI();
+        }
+
+        function copyRefLink() {
+            navigator.clipboard.writeText("https://t.me/botingiz_username?start=ref");
+            alert("Taklif havolasi nusxalandi!");
+        }
+
+        document.getElementById('image-input').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     customImage = event.target.result;
                     localStorage.setItem('h_custom_img', customImage);
-                    coinEmoji.style.display = 'none';
-                    coinImg.src = customImage;
-                    coinImg.style.display = 'block';
+                    updateUI();
                 };
                 reader.readAsDataURL(file);
             }
         });
 
+        const coinEl = document.getElementById('coin');
         coinEl.addEventListener('touchstart', function(e) {
             e.preventDefault();
             for (let i = 0; i < e.touches.length; i++) {
@@ -379,15 +441,13 @@
         });
 
         coinEl.addEventListener('click', function(e) {
-            if (e.pointerType === 'mouse') {
-                handleTap(e.clientX, e.clientY);
-            }
+            if (e.pointerType === 'mouse') handleTap(e.clientX, e.clientY);
         });
 
         function handleTap(x, y) {
             if (energy >= tapPower) {
-                score += tapPower;
-                energy -= tapPower;
+                score += tapPower; energy -= tapPower;
+                playClickSound();
 
                 if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
                     window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
@@ -405,23 +465,16 @@
             el.style.left = (x - 15) + 'px';
             el.style.top = (y - 30) + 'px';
             document.body.appendChild(el);
-
             setTimeout(() => { el.remove(); }, 800);
         }
 
-        // Auto-bot va energiya tiklanishi
         setInterval(() => {
-            if (autoLevel > 0) {
-                score += autoLevel;
-            }
-            if (energy < maxEnergy) {
-                energy = Math.min(maxEnergy, energy + rechargeSpeed);
-            }
+            if (autoLevel > 0) score += autoLevel;
+            if (energy < maxEnergy) energy = Math.min(maxEnergy, energy + rechargeSpeed);
             updateUI();
         }, 1000);
 
         updateUI();
     </script>
 </body>
-</html>
-
+</h
