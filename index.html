@@ -252,6 +252,16 @@
             }
         });
 
+        coin.addEventListener('click', (e) => {
+            let tapPower = 1 + bonusPower;
+            if (energy >= tapPower) {
+                score += tapPower;
+                energy -= tapPower;
+                createFloatText(e.clientX, e.clientY, '+' + tapPower);
+                updateUI();
+            }
+        });
+
         function createFloatText(x, y, txt) {
             const el = document.createElement('div');
             el.className = 'float-text';
@@ -302,7 +312,6 @@
             alert("Havola nusxalandi!");
         }
 
-        // Admin Panel mexanikasi (5 marta bosganda ochiladi)
         let adminClicks = 0;
         let adminTimer;
         function openAdminModal() {
