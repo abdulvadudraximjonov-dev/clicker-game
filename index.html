@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Custom Image Clicker</title>
+    <title>Dynamic Level Clicker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -24,24 +24,48 @@
             overflow: hidden;
         }
 
-        .level-title {
-            font-size: 20px;
+        /* Level va progress bar */
+        .level-container {
+            width: 85%;
+        }
+
+        .level-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 15px;
             font-weight: bold;
-            color: #3498db;
             margin-bottom: 5px;
+            color: #3498db;
+        }
+
+        .level-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #555;
+        }
+
+        .level-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #2980b9, #2ecc71);
+            transition: width 0.3s ease;
         }
 
         .score-value {
-            font-size: 44px;
+            font-size: 42px;
             font-weight: bold;
             color: #f1c40f;
             text-shadow: 0 0 15px rgba(241, 196, 15, 0.5);
+            margin-top: 5px;
         }
 
         /* Tanga / Rasm tugmasi */
         .coin-btn {
-            width: 210px;
-            height: 210px;
+            width: 190px;
+            height: 190px;
             border-radius: 50%;
             background: radial-gradient(circle, #f39c12 0%, #d35400 100%);
             border: 8px solid #f1c40f;
@@ -49,7 +73,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 80px;
+            font-size: 75px;
             cursor: pointer;
             transition: transform 0.1s ease;
             position: relative;
@@ -68,38 +92,61 @@
             transform: scale(0.92);
         }
 
-        /* Galereyadan rasm yuklash tugmasi */
+        /* Do'kon Boostlari */
+        .shop-container {
+            display: flex;
+            gap: 10px;
+            width: 90%;
+        }
+
+        .btn-shop {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 5px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            flex: 1;
+        }
+
+        .btn-shop:active {
+            transform: scale(0.95);
+        }
+
+        /* Rasm yuklash */
         .upload-btn {
             background: linear-gradient(45deg, #e74c3c, #8e44ad);
             color: white;
-            padding: 12px 24px;
-            border-radius: 20px;
-            font-size: 16px;
+            padding: 8px 16px;
+            border-radius: 15px;
+            font-size: 13px;
             font-weight: bold;
             cursor: pointer;
-            display: none; /* 50,000 balldan keyin ko'rinadi */
+            display: none;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             border: 2px solid #fff;
-            margin-top: 10px;
         }
 
         /* Energiya paneli */
         .energy-container {
-            width: 80%;
+            width: 85%;
         }
 
         .energy-text {
-            font-size: 16px;
-            margin-bottom: 6px;
+            font-size: 15px;
+            margin-bottom: 5px;
         }
 
         .energy-bar {
             width: 100%;
             height: 12px;
-            background-color: #333333;
+            background-color: #333;
             border-radius: 10px;
             overflow: hidden;
-            border: 1px solid #555555;
+            border: 1px solid #555;
         }
 
         .energy-fill {
@@ -128,8 +175,14 @@
 </head>
 <body>
 
-    <div>
-        <div class="level-title" id="level-name">Bronze Hamster 🥉</div>
+    <div class="level-container">
+        <div class="level-info">
+            <span id="level-name">Bronze 🥉</span>
+            <span>Lv. <span id="level-num">1</span>/5</span>
+        </div>
+        <div class="level-bar">
+            <div class="level-fill" id="level-fill"></div>
+        </div>
         <div class="score-value" id="score">0</div>
     </div>
 
@@ -139,10 +192,15 @@
     </div>
 
     <input type="file" id="image-input" accept="image/*" style="display: none;">
-    <label for="image-input" class="upload-btn" id="upload-label">🖼️ Galereyadan rasm qo'yish</label>
+    <label for="image-input" class="upload-btn" id="upload-label">🖼️ Rasm qo'yish (50k)</label>
+
+    <div class="shop-container">
+        <button class="btn-shop" onclick="buyMultitap()">⚡ Boost Tap (+1)<br><small><span id="boost-price">500</span> tanga</small></button>
+        <button class="btn-shop" onclick="buyAutoClicker()">🤖 Auto-Bot (<span id="auto-status">0/s</span>)<br><small><span id="auto-price">1000</span> tanga</small></button>
+    </div>
 
     <div class="energy-container">
-        <div class="energy-text">⚡ <span id="energy">1000</span> / 1000</div>
+        <div class="energy-text">⚡ <span id="energy">1000</span> / <span id="max-energy">1000</span></div>
         <div class="energy-bar">
             <div class="energy-fill" id="energy-fill"></div>
         </div>
@@ -150,17 +208,39 @@
 
     <script>
         let score = parseInt(localStorage.getItem('h_score')) || 0;
-        let energy = parseInt(localStorage.getItem('h_energy')) || 1000;
+        let bonusPower = parseInt(localStorage.getItem('h_bpower')) || 0; // Sotib olingan qo'shimcha kuch
+        let boostPrice = parseInt(localStorage.getItem('h_bprice')) || 500;
+        let autoPrice = parseInt(localStorage.getItem('h_aprice')) || 1000;
+        let autoLevel = parseInt(localStorage.getItem('h_autolvl')) || 0;
         let customImage = localStorage.getItem('h_custom_img') || null;
-        const maxEnergy = 1000;
+
+        // DARAJA TALABLARI:
+        // Level 1: 0 - 2,500 ball
+        // Level 2: 2,500 - 10,000 ball
+        // Level 3: 10,000 - 25,000 ball
+        // Level 4: 25,000 - 50,000 ball
+        // Level 5: 50,000+ ball
+        const levels = [
+            { name: "Bronze 🥉", req: 2500, tapPower: 1 },
+            { name: "Silver 🥈", req: 10000, tapPower: 2 },
+            { name: "Gold 🥇", req: 25000, tapPower: 3 },
+            { name: "Platinum 💎", req: 50000, tapPower: 4 },
+            { name: "Legendary 👑", req: 100000, tapPower: 5 }
+        ];
+
+        let currentLvlIndex = 0;
+        let tapPower = 1;
 
         const scoreEl = document.getElementById('score');
         const energyEl = document.getElementById('energy');
+        const maxEnergyEl = document.getElementById('max-energy');
         const energyFillEl = document.getElementById('energy-fill');
         const coinEl = document.getElementById('coin');
         const coinEmoji = document.getElementById('coin-emoji');
         const coinImg = document.getElementById('coin-img');
         const levelNameEl = document.getElementById('level-name');
+        const levelNumEl = document.getElementById('level-num');
+        const levelFillEl = document.getElementById('level-fill');
         const uploadLabel = document.getElementById('upload-label');
         const imageInput = document.getElementById('image-input');
 
@@ -169,16 +249,49 @@
         }
 
         function updateUI() {
+            // Levelni aniqlash
+            currentLvlIndex = 0;
+            let prevReq = 0;
+            for (let i = 0; i < levels.length; i++) {
+                if (score >= levels[i].req) {
+                    currentLvlIndex = i + 1;
+                    prevReq = levels[i].req;
+                } else {
+                    break;
+                }
+            }
+
+            let lvlIdx = Math.min(currentLvlIndex, levels.length - 1);
+            levelNameEl.innerText = levels[lvlIdx].name;
+            levelNumEl.innerText = currentLvlIndex + 1;
+
+            // BOSH BOSISH KUCHI (Level 1 da 1, Level 2 ga o'tganda (2500 ball) 2 bo'ladi) + sotib olingan bonus
+            tapPower = (currentLvlIndex + 1) + bonusPower;
+
+            // Energiyani hisoblash
+            let baseMaxEnergy = 1000;
+            let maxEnergy = baseMaxEnergy + Math.floor(score / 1000) * 100;
+
             scoreEl.innerText = score.toLocaleString();
             energyEl.innerText = energy;
-            energyFillEl.style.width = (energy / maxEnergy * 100) + '%';
+            maxEnergyEl.innerText = maxEnergy.toLocaleString();
+            energyFillEl.style.width = Math.min(100, (energy / maxEnergy * 100)) + '%';
+            
+            document.getElementById('boost-price').innerText = boostPrice.toLocaleString();
+            document.getElementById('auto-price').innerText = autoPrice.toLocaleString();
+            
+            if (autoLevel > 0) {
+                document.getElementById('auto-status').innerText = '+' + autoLevel + '/s';
+            }
 
-            // 50,000 BALGA YETGANDA:
+            // Progress bar
+            let nextReq = levels[lvlIdx].req;
+            let progress = Math.min(100, Math.max(0, ((score - prevReq) / (nextReq - prevReq)) * 100));
+            levelFillEl.style.width = progress + '%';
+
+            // 50,000 BALDA RASM MIKRONI OCHISH
             if (score >= 50000) {
-                uploadLabel.style.display = 'inline-block'; // Rasm yuklash tugmasi chiqadi
-                levelNameEl.innerText = "LEGENDARY HAMSTER 👑";
-                levelNameEl.style.color = "#f1c40f";
-
+                uploadLabel.style.display = 'inline-block';
                 if (customImage) {
                     coinEmoji.style.display = 'none';
                     coinImg.src = customImage;
@@ -188,14 +301,34 @@
                 uploadLabel.style.display = 'none';
                 coinEmoji.style.display = 'block';
                 coinImg.style.display = 'none';
-                levelNameEl.innerText = "Bronze Hamster 🥉";
             }
 
             localStorage.setItem('h_score', score);
             localStorage.setItem('h_energy', energy);
+            localStorage.setItem('h_bpower', bonusPower);
+            localStorage.setItem('h_bprice', boostPrice);
+            localStorage.setItem('h_aprice', autoPrice);
+            localStorage.setItem('h_autolvl', autoLevel);
         }
 
-        // Galereyadan rasm tanlanganida bajariladigan ish
+        function buyMultitap() {
+            if (score >= boostPrice) {
+                score -= boostPrice;
+                bonusPower += 1;
+                boostPrice = Math.floor(boostPrice * 2.2);
+                updateUI();
+            } else { alert("Tangalar yetarli emas!"); }
+        }
+
+        function buyAutoClicker() {
+            if (score >= autoPrice) {
+                score -= autoPrice;
+                autoLevel += 1;
+                autoPrice = Math.floor(autoPrice * 2.5);
+                updateUI();
+            } else { alert("Tangalar yetarli emas!"); }
+        }
+
         imageInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
@@ -225,15 +358,15 @@
         });
 
         function handleTap(x, y) {
-            if (energy > 0) {
-                score += 1;
-                energy -= 1;
+            if (energy >= tapPower) {
+                score += tapPower;
+                energy -= tapPower;
 
                 if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
                     window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
                 }
 
-                createFloatingText(x, y, '+1');
+                createFloatingText(x, y, '+' + tapPower);
                 updateUI();
             }
         }
@@ -249,11 +382,19 @@
             setTimeout(() => { el.remove(); }, 800);
         }
 
+        let baseMaxEnergy = 1000;
+        let maxEnergy = baseMaxEnergy + Math.floor(score / 1000) * 100;
+        let energy = parseInt(localStorage.getItem('h_energy')) || maxEnergy;
+
         setInterval(() => {
-            if (energy < maxEnergy) {
-                energy = Math.min(maxEnergy, energy + 3);
-                updateUI();
+            let currentMaxEnergy = baseMaxEnergy + Math.floor(score / 1000) * 100;
+            if (autoLevel > 0) {
+                score += autoLevel;
             }
+            if (energy < currentMaxEnergy) {
+                energy = Math.min(currentMaxEnergy, energy + 3);
+            }
+            updateUI();
         }, 1000);
 
         updateUI();
