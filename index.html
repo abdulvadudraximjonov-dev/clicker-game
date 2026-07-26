@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Ultimate Clicker Game</title>
+    <title>Ultimate Admin Clicker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { box-sizing: border-box; }
@@ -181,13 +181,40 @@
             border-radius: 8px; font-weight: bold; cursor: pointer;
         }
         .list-btn:disabled { background: #444; color: #aaa; cursor: not-allowed; }
+
+        /* Modal / Admin Panel Style */
+        .modal {
+            display: none; position: fixed; z-index: 200;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: #1e272e; padding: 20px; border-radius: 15px;
+            width: 80%; border: 2px solid #f1c40f; text-align: center;
+        }
+        .modal-btn {
+            background: #e74c3c; color: white; border: none;
+            padding: 10px; margin: 5px 0; border-radius: 8px;
+            width: 100%; font-weight: bold; cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
+    <div id="admin-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="color: #f1c40f; margin-top: 0;">👑 ADMIN PANEL</h2>
+            <button class="modal-btn" style="background: #27ae60;" onclick="adminAddCoins()">💰 +100,000 Tanga</button>
+            <button class="modal-btn" style="background: #3498db;" onclick="adminFullEnergy()">⚡ Cheksiz Energiya</button>
+            <button class="modal-btn" style="background: #9b59b6;" onclick="adminMaxLevel()">🚀 Max Level'ga O'tish</button>
+            <button class="modal-btn" style="background: #7f8c8d;" onclick="closeAdminPanel()">Yopish</button>
+        </div>
+    </div>
+
     <div id="tab-game" class="tab-content active">
         <div class="level-container">
-            <div class="level-info">
+            <div class="level-info" id="admin-trigger">
                 <span id="level-name">Bronze 🥉</span>
                 <span>Lv. <span id="level-num">1</span>/5</span>
             </div>
@@ -253,7 +280,7 @@
             <div class="list-item"><span>🥇 1. Alex</span><b>1,250,000</b></div>
             <div class="list-item"><span>🥈 2. Jamshid</span><b>890,000</b></div>
             <div class="list-item"><span>🥉 3. Sardor</span><b>450,000</b></div>
-            <div class="list-item"><span id="user-rank">🏅 You</span><b id="user-leader-score">0</b></div>
+            <div class="list-item" style="border: 1px solid #f1c40f;"><span id="user-rank">👑 Owner (You)</span><b id="user-leader-score">0</b></div>
         </div>
     </div>
 
@@ -265,6 +292,8 @@
     </div>
 
     <script>
+        const ADMIN_PASSWORD = "7777"; // Admin Paroli
+
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playClickSound(freq = 600) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -308,6 +337,48 @@
 
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.expand();
+        }
+
+        // Secret Admin Panel Activation
+        let clickCount = 0;
+        let clickTimer;
+        document.getElementById('admin-trigger').addEventListener('click', function() {
+            clickCount++;
+            clearTimeout(clickTimer);
+            clickTimer = setTimeout(() => { clickCount = 0; }, 2000);
+
+            if (clickCount >= 5) {
+                clickCount = 0;
+                let pass = prompt("Admin parolini kiriting:");
+                if (pass === ADMIN_PASSWORD) {
+                    document.getElementById('admin-modal').style.display = 'flex';
+                } else if (pass !== null) {
+                    alert("Noto'g'ri parol!");
+                }
+            }
+        });
+
+        function closeAdminPanel() {
+            document.getElementById('admin-modal').style.display = 'none';
+        }
+
+        function adminAddCoins() {
+            score += 100000;
+            updateUI();
+            alert("+100,000 tanga qo'shildi!");
+        }
+
+        function adminFullEnergy() {
+            maxEnergy = 999999;
+            energy = 999999;
+            updateUI();
+            alert("Energiyangiz cheksiz qilindi!");
+        }
+
+        function adminMaxLevel() {
+            score = 100000;
+            updateUI();
+            alert("Legendary Level'ga o'tdingiz!");
         }
 
         function switchTab(tabId, btn) {
@@ -364,10 +435,9 @@
                 document.getElementById('coin-img').style.display = 'none';
             }
 
-            // KUNLIK BONUSNI VAQTI SINOVI (FAKAT 24 SOATDA 1 MARTA)
             const now = new Date().getTime();
             const dailyBtn = document.getElementById('daily-btn');
-            const cooldown = 86400000; // 24 soat (millisekundda)
+            const cooldown = 86400000;
 
             if (now - lastDaily < cooldown) {
                 dailyBtn.disabled = true;
@@ -398,6 +468,7 @@
         }
 
         function buyMultitap() {
+                    function buyMultitap() {
             if (score >= boostPrice) {
                 score -= boostPrice; bonusPower += 1;
                 boostPrice = Math.floor(boostPrice * 2.2); updateUI();
@@ -462,7 +533,7 @@
             }
         });
 
-                // TASODIFIY BOMBA (-2X) PAYDO BO'LISHI
+        // TASODIFIY BOMBA (-2X) PAYDO BO'LISHI
         const bombCoin = document.getElementById('bomb-coin');
         function spawnBomb() {
             if (document.getElementById('tab-game').classList.contains('active')) {
@@ -472,10 +543,10 @@
                 bombCoin.style.top = y + 'px';
                 bombCoin.style.display = 'flex';
 
-                setTimeout(() => { bombCoin.style.display = 'none'; }, 3000); // 3 soniyada yo'qoladi
+                setTimeout(() => { bombCoin.style.display = 'none'; }, 3000);
             }
         }
-        setInterval(spawnBomb, 25000); // Har 25 soniyada chiqadi
+        setInterval(spawnBomb, 25000);
 
         bombCoin.addEventListener('click', function() {
             let penalty = tapPower * 2;
