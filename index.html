@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Ultimate Telegram Clicker</title>
+    <title>Ultimate Clicker Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { box-sizing: border-box; }
@@ -81,6 +81,24 @@
         }
         .coin-btn:active { transform: scale(0.92); }
 
+        /* Qopqon Bomba Tanga (-2x) */
+        .bomb-coin {
+            position: absolute;
+            width: 65px; height: 65px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #e74c3c 0%, #c0392b 100%);
+            border: 3px solid #ff4d4d;
+            box-shadow: 0 0 20px rgba(231, 76, 60, 0.8);
+            display: none; justify-content: center; align-items: center;
+            font-size: 32px; cursor: pointer;
+            z-index: 50;
+            animation: pulseBomb 0.5s infinite alternate;
+        }
+        @keyframes pulseBomb {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.15); }
+        }
+
         /* Boostlar Grid */
         .shop-container {
             display: grid;
@@ -131,7 +149,7 @@
             100% { opacity: 0; transform: translateY(-80px); }
         }
 
-        /* Pastki Menyu (Bottom Navigation) */
+        /* Pastki Menyu */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
             height: 55px; background: #111;
@@ -148,7 +166,6 @@
         .nav-btn span { font-size: 18px; margin-bottom: 2px; }
         .nav-btn.active { color: #f1c40f; }
 
-        /* Boshqa Bo'limlar Visual Style */
         .page-title { font-size: 22px; font-weight: bold; color: #f1c40f; margin-top: 10px; }
         .list-container { width: 90%; margin-top: 15px; overflow-y: auto; max-height: 70vh; }
         .list-item {
@@ -160,10 +177,10 @@
         }
         .list-btn {
             background: #f1c40f; color: #000;
-            border: none; padding: 6px 12px;
+            border: none; padding: 8px 14px;
             border-radius: 8px; font-weight: bold; cursor: pointer;
         }
-        .list-btn:disabled { background: #555; color: #aaa; }
+        .list-btn:disabled { background: #444; color: #aaa; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -182,6 +199,8 @@
             <span id="coin-emoji">🐹</span>
             <img id="coin-img" src="" alt="Custom Image">
         </div>
+
+        <div class="bomb-coin" id="bomb-coin">💣</div>
 
         <input type="file" id="image-input" accept="image/*" style="display: none;">
         <label for="image-input" class="upload-btn" id="upload-label">🖼️ Rasm qo'yish (50k)</label>
@@ -219,7 +238,7 @@
 
     <div id="tab-daily" class="tab-content">
         <div class="page-title">📅 Kundalik Bonus</div>
-        <p style="font-size: 14px; color: #ccc;">Har kuni kiring va tekin tangalarga ega bo'ling!</p>
+        <p style="font-size: 14px; color: #ccc;">Har 24 soatda 1 marta kirib bepul bonus oling!</p>
         <div class="list-container">
             <div class="list-item">
                 <div style="text-align: left;"><b>🎁 Bugungi bonus</b><br><small>+2,500 tanga</small></div>
@@ -246,22 +265,20 @@
     </div>
 
     <script>
-        // Web Audio Synth - Ovoz effektlari yaratish
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playClickSound() {
+        function playClickSound(freq = 600) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.05);
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.08);
             gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
             osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.08);
         }
 
-        // Ma'lumotlarni yuklash
         let score = parseInt(localStorage.getItem('h_score')) || 0;
         let bonusPower = parseInt(localStorage.getItem('h_bpower')) || 0;
         let maxEnergy = parseInt(localStorage.getItem('h_maxenergy')) || 1000;
@@ -275,7 +292,7 @@
         let autoLevel = parseInt(localStorage.getItem('h_autolvl')) || 0;
         let customImage = localStorage.getItem('h_custom_img') || null;
 
-        let lastDaily = localStorage.getItem('h_last_daily') || 0;
+        let lastDaily = parseInt(localStorage.getItem('h_last_daily')) || 0;
         let task1Done = localStorage.getItem('h_task1') || false;
 
         const levels = [
@@ -347,11 +364,20 @@
                 document.getElementById('coin-img').style.display = 'none';
             }
 
-            // Daily & Tasks status
+            // KUNLIK BONUSNI VAQTI SINOVI (FAKAT 24 SOATDA 1 MARTA)
             const now = new Date().getTime();
-            if (now - lastDaily < 86400000) {
-                document.getElementById('daily-btn').disabled = true;
-                document.getElementById('daily-btn').innerText = "Olingan";
+            const dailyBtn = document.getElementById('daily-btn');
+            const cooldown = 86400000; // 24 soat (millisekundda)
+
+            if (now - lastDaily < cooldown) {
+                dailyBtn.disabled = true;
+                let timeLeft = cooldown - (now - lastDaily);
+                let hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                let minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                dailyBtn.innerText = hours + "s " + minutes + "d qoldi";
+            } else {
+                dailyBtn.disabled = false;
+                dailyBtn.innerText = "Olish";
             }
 
             if (task1Done) {
@@ -400,10 +426,14 @@
         }
 
         function claimDailyReward() {
-            score += 2500;
-            localStorage.setItem('h_last_daily', new Date().getTime());
-            alert("Tabriklaymiz! +2,500 tanga olindi!");
-            updateUI();
+            const now = new Date().getTime();
+            if (now - lastDaily >= 86400000) {
+                score += 2500;
+                lastDaily = now;
+                localStorage.setItem('h_last_daily', lastDaily);
+                alert("Tabriklaymiz! +2,500 kunlik bonus olindi!");
+                updateUI();
+            }
         }
 
         function completeTask(id, reward) {
@@ -432,6 +462,30 @@
             }
         });
 
+                // TASODIFIY BOMBA (-2X) PAYDO BO'LISHI
+        const bombCoin = document.getElementById('bomb-coin');
+        function spawnBomb() {
+            if (document.getElementById('tab-game').classList.contains('active')) {
+                const x = Math.floor(Math.random() * (window.innerWidth - 80));
+                const y = Math.floor(Math.random() * (window.innerHeight - 250)) + 100;
+                bombCoin.style.left = x + 'px';
+                bombCoin.style.top = y + 'px';
+                bombCoin.style.display = 'flex';
+
+                setTimeout(() => { bombCoin.style.display = 'none'; }, 3000); // 3 soniyada yo'qoladi
+            }
+        }
+        setInterval(spawnBomb, 25000); // Har 25 soniyada chiqadi
+
+        bombCoin.addEventListener('click', function() {
+            let penalty = tapPower * 2;
+            score = Math.max(0, score - penalty);
+            playClickSound(100);
+            createFloatingText(parseInt(bombCoin.style.left), parseInt(bombCoin.style.top), '-' + penalty, '#ff4d4d');
+            bombCoin.style.display = 'none';
+            updateUI();
+        });
+
         const coinEl = document.getElementById('coin');
         coinEl.addEventListener('touchstart', function(e) {
             e.preventDefault();
@@ -447,21 +501,22 @@
         function handleTap(x, y) {
             if (energy >= tapPower) {
                 score += tapPower; energy -= tapPower;
-                playClickSound();
+                playClickSound(600);
 
                 if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
                     window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
                 }
 
-                createFloatingText(x, y, '+' + tapPower);
+                createFloatingText(x, y, '+' + tapPower, '#ffffff');
                 updateUI();
             }
         }
 
-        function createFloatingText(x, y, text) {
+        function createFloatingText(x, y, text, color = '#ffffff') {
             const el = document.createElement('div');
             el.className = 'float-text';
             el.innerText = text;
+            el.style.color = color;
             el.style.left = (x - 15) + 'px';
             el.style.top = (y - 30) + 'px';
             document.body.appendChild(el);
