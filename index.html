@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Clicker Game Pro</title>
+    <title>Clicker Game Ultimate</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* 1. DIZAYN VA RANGlar */
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: #0f172a; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
@@ -15,7 +14,6 @@
         
         .header { text-align: center; width: 100%; margin-top: 10px; }
         .score-board { font-size: 42px; font-weight: bold; color: #38bdf8; margin: 15px 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .score-board img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
         
         .level-card { background: #1e293b; width: 100%; padding: 12px 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #334155; cursor: pointer; }
         .progress-bar { width: 100%; background: #334155; height: 8px; border-radius: 4px; margin-top: 8px; overflow: hidden; }
@@ -31,18 +29,15 @@
         .energy-bar { width: 100%; background: #1e293b; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid #334155; }
         .energy-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #f59e0b, #ef4444); transition: width 0.2s; }
 
-        /* RO'YXATLAR VA TUGMALAR */
         .list-container { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
         .list-item { background: #1e293b; padding: 15px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #334155; }
         .list-btn { background: #0284c7; color: #fff; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: bold; text-decoration: none; font-size: 14px; }
         .list-btn:disabled { background: #475569; cursor: not-allowed; }
 
-        /* NAVIGATSIYA */
         .nav { display: flex; background: #1e293b; border-top: 1px solid #334155; height: 65px; padding-bottom: env(safe-area-inset-bottom); }
         .nav-btn { flex: 1; background: none; border: none; color: #94a3b8; font-size: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; gap: 5px; }
         .nav-btn.active { color: #38bdf8; font-weight: bold; }
 
-        /* Effektlar */
         .float-text { position: absolute; font-size: 28px; font-weight: bold; pointer-events: none; animation: floatUp 0.8s forwards; z-index: 100; }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
 
@@ -65,8 +60,7 @@
         </div>
 
         <div class="score-board">
-            <span id="coin-emoji">🪙</span>
-            <img id="coin-img" src="" style="display: none;" alt="User Pic">
+            <span>🪙</span>
             <span id="score">0</span>
         </div>
 
@@ -114,7 +108,7 @@
                 <div><b>Kanalga a'zo bo'lish</b><br><small>+5,000 tanga</small></div>
                 <div style="display: flex; gap: 5px;">
                     <a href="https://t.me/anime_team_01" target="_blank" class="list-btn">O'tish</a>
-                    <button class="list-btn" id="task1-btn" onclick="completeTask(1, 5000)">Tekshir</button>
+                    <button class="list-btn" id="task1-btn" onclick="completeTask(5000)">Tekshir</button>
                 </div>
             </div>
         </div>
@@ -125,7 +119,7 @@
         <div class="list-container">
             <div class="list-item" style="flex-direction: column; text-align: center; gap: 10px;">
                 <b>Do'stlarni taklif qiling!</b>
-                <p style="font-size: 13px; color: #94a3b8;">Har bir do'st uchun 10,000 tanga bonus oling.</p>
+                <p style="font-size: 13px; color: #94a3b8;">Har bir do'st uchun 10,000 tanga oling.</p>
                 <button class="list-btn" style="width: 100%;" onclick="copyRefLink()">Havolani nusxalash</button>
             </div>
         </div>
@@ -155,9 +149,10 @@
 
     <div class="modal" id="admin-modal">
         <div class="modal-content">
-            <h3>ADMIN PANEL</h3>
-            <button class="list-btn" style="width: 100%; margin-top: 10px;" onclick="adminAddCoins()">+100,000 Tanga</button>
-            <button class="list-btn" style="width: 100%; margin-top: 10px; background: #ef4444;" onclick="closeAdminModal()">Yopish</button>
+            <h3 style="color: #38bdf8; margin-bottom: 15px;">🛠️ ADMIN PANEL</h3>
+            <button class="list-btn" style="width: 100%; margin-bottom: 10px;" onclick="adminAddCoins()">+100,000 Tanga qo'shish</button>
+            <button class="list-btn" style="width: 100%; margin-bottom: 10px; background: #f59e0b;" onclick="adminMaxEnergy()">Energiyani to'ldirish</button>
+            <button class="list-btn" style="width: 100%; background: #ef4444;" onclick="closeAdminModal()">Yopish</button>
         </div>
     </div>
 
@@ -170,7 +165,6 @@
     </div>
 
     <script>
-        // O'ZGARUVCHILAR
         let score = parseInt(localStorage.getItem('score')) || 0;
         let bonusPower = parseInt(localStorage.getItem('bonusPower')) || 0;
         let maxEnergy = parseInt(localStorage.getItem('maxEnergy')) || 1000;
@@ -192,7 +186,6 @@
             { name: "Afsonaviy 👑", req: 1000000 }
         ];
 
-        // ASOSIY YANGILASH FUNKSIYASI
         function updateUI() {
             document.getElementById('score').innerText = score.toLocaleString();
             document.getElementById('rank-score').innerText = '🪙 ' + score.toLocaleString();
@@ -204,7 +197,6 @@
             document.getElementById('auto-price').innerText = '🪙 ' + autoPrice.toLocaleString();
             document.getElementById('elimit-price').innerText = '🪙 ' + elimitPrice.toLocaleString();
 
-            // Level tizimi
             let currentLvlIdx = 0;
             for (let i = 0; i < levels.length; i++) {
                 if (score >= levels[i].req) currentLvlIdx = i;
@@ -217,7 +209,6 @@
             document.getElementById('level-fill').style.width = Math.min(100, prog) + '%';
             document.getElementById('level-req').innerText = score.toLocaleString() + ' / ' + (nextReq / 1000) + 'k';
 
-            // Tugmalar holati
             const now = Date.now();
             const dailyBtn = document.getElementById('daily-btn');
             if (now - lastDaily < 86400000) {
@@ -233,7 +224,6 @@
                 document.getElementById('task1-btn').innerText = "OK";
             }
 
-            // Saqlash
             localStorage.setItem('score', score);
             localStorage.setItem('energy', energy);
             localStorage.setItem('maxEnergy', maxEnergy);
@@ -245,7 +235,6 @@
             localStorage.setItem('task1Done', task1Done);
         }
 
-        // BOSISH MEXANIKASI
         const coin = document.getElementById('coin');
         coin.addEventListener('touchstart', (e) => {
             e.preventDefault();
@@ -255,7 +244,7 @@
                     score += tapPower;
                     energy -= tapPower;
                     createFloatText(e.touches[i].clientX, e.touches[i].clientY, '+' + tapPower);
-                    if (window.Telegram && window.Telegram.WebApp.HapticFeedback) {
+                    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
                         window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
                     }
                     updateUI();
@@ -273,7 +262,6 @@
             setTimeout(() => el.remove(), 800);
         }
 
-        // TAB ALMASHTIRISH
         function switchTab(id, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -281,7 +269,6 @@
             btn.classList.add('active');
         }
 
-        // DO'KON
         function buyMultitap() {
             if (score >= boostPrice) { score -= boostPrice; bonusPower++; boostPrice *= 2; updateUI(); }
         }
@@ -292,7 +279,6 @@
             if (score >= elimitPrice) { score -= elimitPrice; maxEnergy += 500; energy += 500; elimitPrice *= 2; updateUI(); }
         }
 
-        // VAZIFALAR
         function claimDailyReward() {
             const now = Date.now();
             if (now - lastDaily >= 86400000) {
@@ -303,27 +289,35 @@
                 alert("Kunlik bonus olindi!");
             }
         }
-        function completeTask(id, reward) {
-            score += reward;
-            task1Done = true;
-            updateUI();
-            alert("Vazifa bajarildi!");
+        function completeTask(reward) {
+            if (!task1Done) {
+                score += reward;
+                task1Done = true;
+                updateUI();
+                alert("Vazifa bajarildi!");
+            }
         }
         function copyRefLink() {
-            navigator.clipboard.writeText("https://t.me/my_tap_clicker_game_bot?start=ref123");
+            navigator.clipboard.writeText("https://t.me/anime_team_01_bot?start=ref");
             alert("Havola nusxalandi!");
         }
 
-        // ADMIN
+        // Admin Panel mexanikasi (5 marta bosganda ochiladi)
         let adminClicks = 0;
+        let adminTimer;
         function openAdminModal() {
             adminClicks++;
-            if (adminClicks >= 5) { adminClicks = 0; document.getElementById('admin-modal').style.display = 'flex'; }
+            clearTimeout(adminTimer);
+            adminTimer = setTimeout(() => { adminClicks = 0; }, 1500);
+            if (adminClicks >= 5) {
+                adminClicks = 0;
+                document.getElementById('admin-modal').style.display = 'flex';
+            }
         }
         function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
         function adminAddCoins() { score += 100000; updateUI(); closeAdminModal(); }
+        function adminMaxEnergy() { energy = maxEnergy; updateUI(); closeAdminModal(); }
 
-        // AVTOMATIK ISHLAR (Energiya tiklanishi va Autoclicker)
         setInterval(() => {
             if (energy < maxEnergy) energy = Math.min(maxEnergy, energy + 1);
             if (autoLevel > 0) score += autoLevel;
