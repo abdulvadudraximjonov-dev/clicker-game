@@ -2,52 +2,208 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clicker Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Hamster Clicker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            background-color: #1c1c1e;
+            background: radial-gradient(circle, #2c3e50 0%, #000000 100%);
             color: white;
-            font-family: sans-serif;
+            font-family: 'Arial', sans-serif;
             text-align: center;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
             height: 100vh;
             margin: 0;
+            padding: 20px 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
         }
-        button {
-            background-color: #007aff;
-            color: white;
-            border: none;
-            padding: 20px 40px;
-            font-size: 22px;
-            border-radius: 50px;
+
+        .score-container {
             margin-top: 20px;
-            cursor: pointer;
         }
-        button:active {
-            transform: scale(0.95);
+
+        .score-title {
+            font-size: 18px;
+            color: #aaaaaa;
+        }
+
+        .score-value {
+            font-size: 48px;
+            font-weight: bold;
+            color: #f1c40f;
+            text-shadow: 0 0 15px rgba(241, 196, 15, 0.5);
+        }
+
+        /* Tanga tugmasi */
+        .coin-btn {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #f39c12 0%, #d35400 100%);
+            border: 8px solid #f1c40f;
+            box-shadow: 0 0 30px rgba(241, 196, 15, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 80px;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            position: relative;
+        }
+
+        .coin-btn:active {
+            transform: scale(0.92);
+        }
+
+        /* Energiya paneli */
+        .energy-container {
+            width: 80%;
+            margin-bottom: 20px;
+        }
+
+        .energy-text {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+
+        .energy-bar {
+            width: 100%;
+            height: 12px;
+            background-color: #333333;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #555555;
+        }
+
+        .energy-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #f1c40f, #e67e22);
+            transition: width 0.2s ease;
+        }
+
+        /* Uchib chiqadigan +1 effekti */
+        .float-text {
+            position: absolute;
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffffff;
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+            text-shadow: 0 0 5px rgba(0,0,0,0.8);
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-80px);
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Tap Game 🚀</h1>
-    <h2 id="score">0</h2>
-    <button onclick="tap()">BOS!</button>
+
+    <div class="score-container">
+        <div class="score-title">Jami tangalar</div>
+        <div class="score-value" id="score">0</div>
+    </div>
+
+    <div class="coin-btn" id="coin">
+        🐹
+    </div>
+
+    <div class="energy-container">
+        <div class="energy-text">⚡ <span id="energy">1000</span> / 1000</div>
+        <div class="energy-bar">
+            <div class="energy-fill" id="energy-fill"></div>
+        </div>
+    </div>
 
     <script>
-        let count = 0;
+        let score = parseInt(localStorage.getItem('hamster_score')) || 0;
+        let energy = parseInt(localStorage.getItem('hamster_energy')) || 1000;
+        const maxEnergy = 1000;
+
+        const scoreEl = document.getElementById('score');
+        const energyEl = document.getElementById('energy');
+        const energyFillEl = document.getElementById('energy-fill');
+        const coinEl = document.getElementById('coin');
+
+        // Telegram WebApp ni kengaytirish
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.expand();
         }
 
-        function tap() {
-            count++;
-            document.getElementById('score').innerText = count;
+        function updateUI() {
+            scoreEl.innerText = score.toLocaleString();
+            energyEl.innerText = energy;
+            energyFillEl.style.width = (energy / maxEnergy * 100) + '%';
+            
+            localStorage.setItem('hamster_score', score);
+            localStorage.setItem('hamster_energy', energy);
         }
+
+        coinEl.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            for (let i = 0; i < e.touches.length; i++) {
+                handleTap(e.touches[i].clientX, e.touches[i].clientY);
+            }
+        });
+
+        coinEl.addEventListener('click', function(e) {
+            if (e.pointerType === 'mouse') {
+                handleTap(e.clientX, e.clientY);
+            }
+        });
+
+        function handleTap(x, y) {
+            if (energy > 0) {
+                score += 1;
+                energy -= 1;
+                
+                // Vibratsiya (Telegram xususiyati)
+                if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                }
+
+                createFloatingText(x, y);
+                updateUI();
+            }
+        }
+
+        function createFloatingText(x, y) {
+            const el = document.createElement('div');
+            el.className = 'float-text';
+            el.innerText = '+1';
+            el.style.left = (x - 15) + 'px';
+            el.style.top = (y - 30) + 'px';
+            document.body.appendChild(el);
+
+            setTimeout(() => {
+                el.remove();
+            }, 800);
+        }
+
+        // Energiyani asta-sekin qayta tiklash (har soniyada +3 energiya)
+        setInterval(() => {
+            if (energy < maxEnergy) {
+                energy = Math.min(maxEnergy, energy + 3);
+                updateUI();
+            }
+        }, 1000);
+
+        updateUI();
     </script>
 </body>
 </html>
