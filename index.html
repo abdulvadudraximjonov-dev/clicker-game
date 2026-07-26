@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Clicker Game Ultimate</title>
+    <title>Clicker Game Ultimate + Avatar</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: #0f172a; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -12,25 +13,34 @@
         .tab-content { display: none; flex: 1; flex-direction: column; align-items: center; padding: 20px; overflow-y: auto; }
         .tab-content.active { display: flex; }
         
-        .header { text-align: center; width: 100%; margin-top: 10px; }
-        .score-board { font-size: 42px; font-weight: bold; color: #38bdf8; margin: 15px 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .header { text-align: center; width: 100%; margin-top: 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         
-        .level-card { background: #1e293b; width: 100%; padding: 12px 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #334155; cursor: pointer; }
-        .progress-bar { width: 100%; background: #334155; height: 8px; border-radius: 4px; margin-top: 8px; overflow: hidden; }
+        /* Profil va Avatar qismi */
+        .profile-container { display: flex; align-items: center; gap: 12px; background: #1e293b; padding: 8px 15px; border-radius: 15px; border: 1px solid #334155; width: 100%; max-width: 360px; }
+        .avatar-box { width: 50px; height: 50px; border-radius: 50%; background: #334155; overflow: hidden; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 2px solid #38bdf8; flex-shrink: 0; }
+        .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-box input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        .profile-info { text-align: left; overflow: hidden; }
+        .profile-name { font-weight: bold; font-size: 15px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .level-card { background: #1e293b; width: 100%; max-width: 360px; padding: 10px 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #334155; cursor: pointer; }
+        .progress-bar { width: 100%; max-width: 360px; background: #334155; height: 8px; border-radius: 4px; overflow: hidden; }
         .progress-fill { background: #38bdf8; height: 100%; width: 0%; transition: width 0.3s; }
 
-        .coin-container { position: relative; display: flex; align-items: center; justify-content: center; margin: 30px 0; }
-        .coin { width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, #38bdf8 0%, #0369a1 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 40px rgba(56, 189, 248, 0.4); cursor: pointer; transition: transform 0.1s; border: 5px solid #7dd3fc; }
+        .score-board { font-size: 38px; font-weight: bold; color: #38bdf8; margin: 10px 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
+
+        .coin-container { position: relative; display: flex; align-items: center; justify-content: center; margin: 20px 0; }
+        .coin { width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, #38bdf8 0%, #0369a1 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 40px rgba(56, 189, 248, 0.4); cursor: pointer; transition: transform 0.1s; border: 5px solid #7dd3fc; }
         .coin:active { transform: scale(0.92); }
-        .coin span { font-size: 80px; }
+        .coin span { font-size: 75px; }
         
-        .energy-container { width: 100%; max-width: 320px; margin-top: auto; padding-bottom: 20px; }
+        .energy-container { width: 100%; max-width: 320px; margin-top: auto; padding-bottom: 10px; }
         .energy-info { display: flex; justify-content: space-between; font-size: 14px; color: #94a3b8; margin-bottom: 5px; }
         .energy-bar { width: 100%; background: #1e293b; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid #334155; }
         .energy-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #f59e0b, #ef4444); transition: width 0.2s; }
 
-        .list-container { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
-        .list-item { background: #1e293b; padding: 15px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #334155; }
+        .list-container { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+        .list-item { background: #1e293b; padding: 14px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #334155; }
         .list-btn { background: #0284c7; color: #fff; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: bold; text-decoration: none; font-size: 14px; }
         .list-btn:disabled { background: #475569; cursor: not-allowed; }
 
@@ -38,7 +48,7 @@
         .nav-btn { flex: 1; background: none; border: none; color: #94a3b8; font-size: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; gap: 5px; }
         .nav-btn.active { color: #38bdf8; font-weight: bold; }
 
-        .float-text { position: absolute; font-size: 28px; font-weight: bold; pointer-events: none; animation: floatUp 0.8s forwards; z-index: 100; }
+        .float-text { position: absolute; font-size: 26px; font-weight: bold; pointer-events: none; animation: floatUp 0.8s forwards; z-index: 100; }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 1000; }
@@ -49,6 +59,18 @@
 
     <div id="tab-game" class="tab-content active">
         <div class="header">
+            <div class="profile-container">
+                <div class="avatar-box" id="avatar-box">
+                    <span id="avatar-emoji">👤</span>
+                    <img id="avatar-img" src="" style="display: none;" alt="Avatar">
+                    <input type="file" accept="image/*" id="avatar-input" onchange="loadAvatar(event)">
+                </div>
+                <div class="profile-info">
+                    <div class="profile-name" id="profile-name-text">Oyinchi</div>
+                    <div style="font-size: 11px; color: #38bdf8;">Rasmni o'zgartirish uchun bosing</div>
+                </div>
+            </div>
+
             <div class="level-card" onclick="openAdminModal()">
                 <div>
                     <span id="level-name" style="font-weight: bold; color: #38bdf8;">Bronza 🥉</span>
@@ -126,24 +148,9 @@
     </div>
 
     <div id="tab-leaderboard" class="tab-content">
-        <h2 style="color: #38bdf8; margin-bottom: 10px;">Reyting (Top)</h2>
-        <div class="list-container">
-            <div class="list-item">
-                <span>1. 🥇 Bekzod</span>
-                <span style="color: #38bdf8; font-weight: bold;">🪙 2,450k</span>
-            </div>
-            <div class="list-item">
-                <span>2. 🥈 Jasur</span>
-                <span style="color: #38bdf8; font-weight: bold;">🪙 1,820k</span>
-            </div>
-            <div class="list-item">
-                <span>3. 🥉 Aziza</span>
-                <span style="color: #38bdf8; font-weight: bold;">🪙 950k</span>
-            </div>
-            <div class="list-item" style="border: 2px solid #38bdf8;">
-                <span>Siz (O'yinchi)</span>
-                <span style="color: #38bdf8; font-weight: bold;" id="rank-score">0</span>
-            </div>
+        <h2 style="color: #38bdf8; margin-bottom: 10px;">Onlayn Reyting (Top)</h2>
+        <div class="list-container" id="leaderboard-list">
+            <div class="list-item"><span>Yuklanmoqda...</span></div>
         </div>
     </div>
 
@@ -161,10 +168,21 @@
         <button class="nav-btn" onclick="switchTab('tab-shop', this)">🛒 Do'kon</button>
         <button class="nav-btn" onclick="switchTab('tab-tasks', this)">📋 Vazifa</button>
         <button class="nav-btn" onclick="switchTab('tab-friends', this)">👥 Do'stlar</button>
-        <button class="nav-btn" onclick="switchTab('tab-leaderboard', this)">🏆 Top</button>
+        <button class="nav-btn" onclick="switchTab('tab-leaderboard', loadLeaderboard)">🏆 Top</button>
     </div>
 
     <script>
+        // Supabase sozlamalari
+        const SUPABASE_URL = 'https://pwfuwffjrsduxdvgwsyt.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_-XoeLp...'; // O'zingizning kalitingiz shu yerda turadi
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let tgUser = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user;
+        let userId = tgUser ? tgUser.id.toString() : 'guest_' + Math.floor(Math.random() * 10000);
+        let userName = tgUser ? (tgUser.first_name || 'Oyinchi') : 'Mehmon';
+
+        document.getElementById('profile-name-text').innerText = userName;
+
         let score = parseInt(localStorage.getItem('score')) || 0;
         let bonusPower = parseInt(localStorage.getItem('bonusPower')) || 0;
         let maxEnergy = parseInt(localStorage.getItem('maxEnergy')) || 1000;
@@ -178,6 +196,30 @@
         let lastDaily = parseInt(localStorage.getItem('lastDaily')) || 0;
         let task1Done = localStorage.getItem('task1Done') === 'true';
 
+        // Saqlangan avatarni yuklash
+        let savedAvatar = localStorage.getItem('userAvatar');
+        if (savedAvatar) {
+            document.getElementById('avatar-img').src = savedAvatar;
+            document.getElementById('avatar-img').style.display = 'block';
+            document.getElementById('avatar-emoji').style.display = 'none';
+        }
+
+        // Galereyadan rasm yuklash funksiyasi
+        function loadAvatar(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64Image = e.target.result;
+                    document.getElementById('avatar-img').src = base64Image;
+                    document.getElementById('avatar-img').style.display = 'block';
+                    document.getElementById('avatar-emoji').style.display = 'none';
+                    localStorage.setItem('userAvatar', base64Image);
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
         const levels = [
             { name: "Bronza 🥉", req: 0 },
             { name: "Kumush 🥈", req: 10000 },
@@ -186,9 +228,53 @@
             { name: "Afsonaviy 👑", req: 1000000 }
         ];
 
+        async function syncWithSupabase() {
+            try {
+                await supabaseClient.from('players').upsert({
+                    id: userId,
+                    name: userName,
+                    score: score
+                });
+            } catch (err) {
+                console.log("Bazaga yozishda xatolik:", err);
+            }
+        }
+
+        async function loadLeaderboard() {
+            switchTab('tab-leaderboard', document.querySelectorAll('.nav-btn')[4]);
+            const listEl = document.getElementById('leaderboard-list');
+            listEl.innerHTML = '<div class="list-item"><span>Yuklanmoqda...</span></div>';
+
+            try {
+                let { data, error } = await supabaseClient
+                    .from('players')
+                    .select('name, score')
+                    .order('score', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    listEl.innerHTML = '';
+                    data.forEach((player, index) => {
+                        let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1) + '.';
+                        listEl.innerHTML += `
+                            <div class="list-item">
+                                <span>${medal} ${player.name}</span>
+                                <span style="color: #38bdf8; font-weight: bold;">🪙 ${player.score.toLocaleString()}</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    listEl.innerHTML = '<div class="list-item"><span>Hozircha o\'yinchilar yo\'q</span></div>';
+                }
+            } catch (err) {
+                listEl.innerHTML = '<div class="list-item"><span>Tarmoqda xatolik yuz berdi</span></div>';
+            }
+        }
+
         function updateUI() {
             document.getElementById('score').innerText = score.toLocaleString();
-            document.getElementById('rank-score').innerText = '🪙 ' + score.toLocaleString();
             document.getElementById('energy').innerText = energy;
             document.getElementById('max-energy').innerText = maxEnergy;
             document.getElementById('energy-fill').style.width = (energy / maxEnergy * 100) + '%';
@@ -208,21 +294,6 @@
             let prog = ((score - levels[currentLvlIdx].req) / (nextReq - levels[currentLvlIdx].req)) * 100;
             document.getElementById('level-fill').style.width = Math.min(100, prog) + '%';
             document.getElementById('level-req').innerText = score.toLocaleString() + ' / ' + (nextReq / 1000) + 'k';
-
-            const now = Date.now();
-            const dailyBtn = document.getElementById('daily-btn');
-            if (now - lastDaily < 86400000) {
-                dailyBtn.disabled = true;
-                dailyBtn.innerText = "Kutish...";
-            } else {
-                dailyBtn.disabled = false;
-                dailyBtn.innerText = "Olish";
-            }
-
-            if (task1Done) {
-                document.getElementById('task1-btn').disabled = true;
-                document.getElementById('task1-btn').innerText = "OK";
-            }
 
             localStorage.setItem('score', score);
             localStorage.setItem('energy', energy);
@@ -244,10 +315,8 @@
                     score += tapPower;
                     energy -= tapPower;
                     createFloatText(e.touches[i].clientX, e.touches[i].clientY, '+' + tapPower);
-                    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-                        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-                    }
                     updateUI();
+                    syncWithSupabase();
                 }
             }
         });
@@ -259,6 +328,7 @@
                 energy -= tapPower;
                 createFloatText(e.clientX, e.clientY, '+' + tapPower);
                 updateUI();
+                syncWithSupabase();
             }
         });
 
@@ -276,14 +346,14 @@
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            btn.classList.add('active');
+            if (typeof btn === 'object') btn.classList.add('active');
         }
 
         function buyMultitap() {
-            if (score >= boostPrice) { score -= boostPrice; bonusPower++; boostPrice *= 2; updateUI(); }
+            if (score >= boostPrice) { score -= boostPrice; bonusPower++; boostPrice *= 2; updateUI(); syncWithSupabase(); }
         }
         function buyAutoClicker() {
-            if (score >= autoPrice) { score -= autoPrice; autoLevel++; autoPrice *= 2; updateUI(); }
+            if (score >= autoPrice) { score -= autoPrice; autoLevel++; autoPrice *= 2; updateUI(); syncWithSupabase(); }
         }
         function buyEnergyLimit() {
             if (score >= elimitPrice) { score -= elimitPrice; maxEnergy += 500; energy += 500; elimitPrice *= 2; updateUI(); }
@@ -296,18 +366,9 @@
                 lastDaily = now;
                 localStorage.setItem('lastDaily', lastDaily);
                 updateUI();
+                syncWithSupabase();
                 alert("Kunlik bonus olindi!");
-            }
-        }
-        function completeTask(reward) {
-            if (!task1Done) {
-                score += reward;
-                task1Done = true;
-                updateUI();
-                alert("Vazifa bajarildi!");
-            }
-        }
-        function copyRefLink() {
+                 function copyRefLink() {
             navigator.clipboard.writeText("https://t.me/anime_team_01_bot?start=ref");
             alert("Havola nusxalandi!");
         }
@@ -324,16 +385,20 @@
             }
         }
         function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
-        function adminAddCoins() { score += 100000; updateUI(); closeAdminModal(); }
+        function adminAddCoins() { score += 100000; updateUI(); syncWithSupabase(); closeAdminModal(); }
         function adminMaxEnergy() { energy = maxEnergy; updateUI(); closeAdminModal(); }
 
         setInterval(() => {
             if (energy < maxEnergy) energy = Math.min(maxEnergy, energy + 1);
-            if (autoLevel > 0) score += autoLevel;
+            if (autoLevel > 0) {
+                score += autoLevel;
+                syncWithSupabase();
+            }
             updateUI();
         }, 1000);
 
         updateUI();
+        syncWithSupabase();
     </script>
 </body>
 </html>
