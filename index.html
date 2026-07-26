@@ -2,449 +2,229 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Ultimate Admin Clicker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Clicker Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { box-sizing: border-box; }
-        body {
-            background: radial-gradient(circle, #2c3e50 0%, #000000 100%);
-            color: white;
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-            height: 100vh;
-            margin: 0;
-            padding: 10px 0 60px 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            user-select: none;
-            -webkit-user-select: none;
-            overflow: hidden;
-        }
-
-        .tab-content {
-            display: none;
-            width: 100%;
-            height: 100%;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #0f172a; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .tab-content { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px; overflow-y: auto; }
         .tab-content.active { display: flex; }
+        
+        .header { text-align: center; margin-top: 10px; }
+        .score-board { font-size: 38px; font-weight: bold; color: #38bdf8; margin: 10px 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .score-board img { width: 45px; height: 45px; object-fit: cover; border-radius: 50%; }
+        
+        .level-card { background: #1e293b; width: 100%; padding: 12px 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #334155; }
+        .progress-bar { width: 100%; background: #334155; height: 8px; border-radius: 4px; margin-top: 8px; overflow: hidden; }
+        .progress-fill { background: #38bdf8; height: 100%; width: 0%; transition: width 0.3s; }
 
-        /* Level va Progress Bar */
-        .level-container { width: 85%; }
-        .level-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #3498db;
-        }
-        .level-bar {
-            width: 100%; height: 10px;
-            background-color: #333;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid #555;
-        }
-        .level-fill {
-            width: 0%; height: 100%;
-            background: linear-gradient(90deg, #2980b9, #2ecc71);
-            transition: width 0.3s ease;
-        }
-        .score-value {
-            font-size: 40px; font-weight: bold;
-            color: #f1c40f;
-            text-shadow: 0 0 15px rgba(241, 196, 15, 0.5);
-            margin-top: 5px;
-        }
+        .coin-container { position: relative; display: flex; align-items: center; justify-content: center; margin: 20px 0; }
+        .coin { width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, #38bdf8 0%, #0369a1 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(56, 189, 248, 0.4); cursor: pointer; transition: transform 0.1s; border: 4px solid #7dd3fc; }
+        .coin:active { transform: scale(0.92); }
+        .coin img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none; }
+        
+        .energy-container { width: 100%; max-width: 300px; }
+        .energy-info { display: flex; justify-content: space-between; font-size: 14px; color: #94a3b8; margin-bottom: 5px; }
+        .energy-bar { width: 100%; background: #1e293b; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #334155; }
+        .energy-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #f59e0b, #ef4444); transition: width 0.2s; }
 
-        /* Tanga / Rasm */
-        .coin-btn {
-            width: 170px; height: 170px;
-            border-radius: 50%;
-            background: radial-gradient(circle, #f39c12 0%, #d35400 100%);
-            border: 8px solid #f1c40f;
-            box-shadow: 0 0 30px rgba(241, 196, 15, 0.4);
-            display: flex; justify-content: center; align-items: center;
-            font-size: 70px; cursor: pointer;
-            transition: transform 0.1s ease;
-            position: relative; overflow: hidden;
-        }
-        .coin-btn img {
-            width: 100%; height: 100%;
-            object-fit: cover; border-radius: 50%; display: none;
-        }
-        .coin-btn:active { transform: scale(0.92); }
+        .shop-grid { display: grid; grid-template-columns: 1fr; gap: 12px; width: 100%; max-width: 350px; }
+        .shop-btn { background: #1e293b; border: 1px solid #334155; color: #fff; padding: 12px 15px; border-radius: 12px; text-align: left; cursor: pointer; transition: 0.2s; }
+        .shop-btn:active { transform: scale(0.97); background: #334155; }
+        
+        .list-container { width: 100%; max-width: 350px; display: flex; flex-direction: column; gap: 10px; }
+        .list-item { background: #1e293b; padding: 12px 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #334155; }
+        .list-btn { background: #0284c7; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+        
+        .nav { display: flex; background: #1e293b; border-top: 1px solid #334155; height: 60px; }
+        .nav-btn { flex: 1; background: none; border: none; color: #94a3b8; font-size: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; gap: 4px; }
+        .nav-btn.active { color: #38bdf8; font-weight: bold; }
 
-        /* Qopqon Bomba Tanga (-2x) */
-        .bomb-coin {
-            position: absolute;
-            width: 65px; height: 65px;
-            border-radius: 50%;
-            background: radial-gradient(circle, #e74c3c 0%, #c0392b 100%);
-            border: 3px solid #ff4d4d;
-            box-shadow: 0 0 20px rgba(231, 76, 60, 0.8);
-            display: none; justify-content: center; align-items: center;
-            font-size: 32px; cursor: pointer;
-            z-index: 50;
-            animation: pulseBomb 0.5s infinite alternate;
-        }
-        @keyframes pulseBomb {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.15); }
-        }
+        .float-text { position: absolute; font-size: 24px; font-weight: bold; pointer-events: none; animation: floatUp 0.8s forwards; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-80px); } }
 
-        /* Boostlar Grid */
-        .shop-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px; width: 90%;
-        }
-        .btn-shop {
-            background: #27ae60; color: white;
-            border: none; padding: 8px 4px;
-            border-radius: 12px; font-size: 11px;
-            font-weight: bold; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        .btn-shop:active { transform: scale(0.95); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 100; }
+        .modal-content { background: #1e293b; padding: 20px; border-radius: 15px; width: 85%; max-width: 320px; text-align: center; border: 1px solid #334155; }
+        .modal-btn { background: #0284c7; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; margin-top: 15px; cursor: pointer; font-weight: bold; width: 100%; }
 
-        .upload-btn {
-            background: linear-gradient(45deg, #e74c3c, #8e44ad);
-            color: white; padding: 6px 14px;
-            border-radius: 15px; font-size: 12px;
-            font-weight: bold; cursor: pointer; display: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: 2px solid #fff;
-        }
-
-        /* Energiya */
-        .energy-container { width: 85%; }
-        .energy-text { font-size: 14px; margin-bottom: 4px; }
-        .energy-bar {
-            width: 100%; height: 12px;
-            background-color: #333; border-radius: 10px;
-            overflow: hidden; border: 1px solid #555;
-        }
-        .energy-fill {
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, #f1c40f, #e67e22);
-            transition: width 0.2s ease;
-        }
-
-        /* Uchuvchi sonlar */
-        .float-text {
-            position: absolute; font-size: 30px;
-            font-weight: bold; color: #ffffff;
-            pointer-events: none;
-            animation: floatUp 0.8s ease-out forwards;
-            text-shadow: 0 0 5px rgba(0,0,0,0.8);
-        }
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-80px); }
-        }
-
-        /* Pastki Menyu */
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            height: 55px; background: #111;
-            display: flex; justify-content: space-around;
-            align-items: center; border-top: 1px solid #333;
-            z-index: 100;
-        }
-        .nav-btn {
-            background: none; border: none; color: #888;
-            font-size: 11px; font-weight: bold;
-            display: flex; flex-direction: column;
-            align-items: center; cursor: pointer;
-        }
-        .nav-btn span { font-size: 18px; margin-bottom: 2px; }
-        .nav-btn.active { color: #f1c40f; }
-
-        .page-title { font-size: 22px; font-weight: bold; color: #f1c40f; margin-top: 10px; }
-        .list-container { width: 90%; margin-top: 15px; overflow-y: auto; max-height: 70vh; }
-        .list-item {
-            background: rgba(255, 255, 255, 0.08);
-            margin-bottom: 10px; padding: 12px;
-            border-radius: 12px; display: flex;
-            justify-content: space-between; align-items: center;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .list-btn {
-            background: #f1c40f; color: #000;
-            border: none; padding: 8px 14px;
-            border-radius: 8px; font-weight: bold; cursor: pointer;
-        }
-        .list-btn:disabled { background: #444; color: #aaa; cursor: not-allowed; }
-
-        /* Modal / Admin Panel Style */
-        .modal {
-            display: none; position: fixed; z-index: 200;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            justify-content: center; align-items: center;
-        }
-        .modal-content {
-            background: #1e272e; padding: 20px; border-radius: 15px;
-            width: 80%; border: 2px solid #f1c40f; text-align: center;
-        }
-        .modal-btn {
-            background: #e74c3c; color: white; border: none;
-            padding: 10px; margin: 5px 0; border-radius: 8px;
-            width: 100%; font-weight: bold; cursor: pointer;
-        }
+        .bomb { position: absolute; width: 60px; height: 60px; background: #ef4444; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 28px; cursor: pointer; z-index: 50; box-shadow: 0 0 15px #ef4444; }
     </style>
 </head>
 <body>
 
-    <div id="admin-modal" class="modal">
-        <div class="modal-content">
-            <h2 style="color: #f1c40f; margin-top: 0;">👑 ADMIN PANEL</h2>
-            <button class="modal-btn" style="background: #27ae60;" onclick="adminAddCoins()">💰 +100,000 Tanga</button>
-            <button class="modal-btn" style="background: #3498db;" onclick="adminFullEnergy()">⚡ Cheksiz Energiya</button>
-            <button class="modal-btn" style="background: #9b59b6;" onclick="adminMaxLevel()">🚀 Max Level'ga O'tish</button>
-            <button class="modal-btn" style="background: #7f8c8d;" onclick="closeAdminPanel()">Yopish</button>
-        </div>
-    </div>
-
     <div id="tab-game" class="tab-content active">
-        <div class="level-container">
-            <div class="level-info" id="admin-trigger">
-                <span id="level-name">Bronze 🥉</span>
-                <span>Lv. <span id="level-num">1</span>/5</span>
+        <div class="header">
+            <div class="level-card" onclick="openAdminModal()">
+                <div>
+                    <span id="level-name" style="font-weight: bold; color: #38bdf8;">Bronza 🥉</span>
+                    <div style="font-size: 12px; color: #94a3b8;" id="level-req">0 / 2500</div>
+                </div>
+                <div style="font-size: 14px; background: #0369a1; padding: 4px 10px; border-radius: 8px;">Level <span id="level-num">1</span></div>
             </div>
-            <div class="level-bar"><div class="level-fill" id="level-fill"></div></div>
-            <div class="score-value" id="score">0</div>
+            <div class="progress-bar"><div class="progress-fill" id="level-fill"></div></div>
         </div>
 
-        <div class="coin-btn" id="coin">
-            <span id="coin-emoji">🐹</span>
-            <img id="coin-img" src="" alt="Custom Image">
+        <div class="score-board">
+            <span id="coin-emoji">🪙</span>
+            <img id="coin-img" src="" alt="Rasm">
+            <span id="score">0</span>
         </div>
 
-        <div class="bomb-coin" id="bomb-coin">💣</div>
-
-        <input type="file" id="image-input" accept="image/*" style="display: none;">
-        <label for="image-input" class="upload-btn" id="upload-label">🖼️ Rasm qo'yish (50k)</label>
-
-        <div class="shop-container">
-            <button class="btn-shop" onclick="buyMultitap()">⚡ Tap (+1)<br><small><span id="boost-price">500</span> tanga</small></button>
-            <button class="btn-shop" onclick="buyAutoClicker()">🤖 Auto-Bot (<span id="auto-status">0/s</span>)<br><small><span id="auto-price">1000</span> tanga</small></button>
-            <button class="btn-shop" onclick="buyEnergyLimit()">🔋 Energy (+500)<br><small><span id="elimit-price">500</span> tanga</small></button>
-            <button class="btn-shop" onclick="buyRechargeSpeed()">⚡ Tiklanish (+1/s)<br><small><span id="erecharge-price">300</span> tanga</small></button>
+        <div class="coin-container">
+            <div class="bomb" id="bomb-coin">💣</div>
+            <div class="coin" id="coin">
+                <span style="font-size: 70px;">🪙</span>
+            </div>
         </div>
 
         <div class="energy-container">
-            <div class="energy-text">⚡ <span id="energy">1000</span> / <span id="max-energy">1000</span></div>
+            <div class="energy-info">
+                <span>⚡ Energiya</span>
+                <span><span id="energy">1000</span> / <span id="max-energy">1000</span></span>
+            </div>
             <div class="energy-bar"><div class="energy-fill" id="energy-fill"></div></div>
         </div>
     </div>
 
-    <div id="tab-tasks" class="tab-content">
-        <div class="page-title">📋 Vazifalar</div>
-        <div class="list-container">
-            <div class="list-item">
-                <div style="text-align: left;">
-                    <b>📢 Telegram kanal</b><br><small>+5,000 tanga</small>
-                </div>
-                <button class="list-btn" id="task1-btn" onclick="completeTask(1, 5000)">Bajarish</button>
-            </div>
-            <div class="list-item">
-                <div style="text-align: left;">
-                    <b>👥 Do'stlarni taklif qilish</b><br><small>Ref-link orqali: +10,000</small>
-                </div>
-                <button class="list-btn" onclick="copyRefLink()">Nusxalash</button>
-            </div>
+    <div id="tab-shop" class="tab-content">
+        <h2 style="margin-top: 10px; color: #38bdf8;">Boostlar</h2>
+        <div class="shop-grid">
+            <button class="shop-btn" onclick="buyMultitap()">
+                <b>Multitap (+1 Har bosishda)</b><br><small id="boost-price">🪙 500</small>
+            </button>
+            <button class="shop-btn" onclick="buyAutoClicker()">
+                <b>Avtokliker (+1 Sekundiga)</b><br><small id="auto-price">🪙 1000</small>
+            </button>
+            <button class="shop-btn" onclick="buyEnergyLimit()">
+                <b>Energiya limiti (+500)</b><br><small id="elimit-price">🪙 500</small>
+            </button>
+            <button class="shop-btn" onclick="buyRechargeSpeed()">
+                <b>Tiklanish tezligi (+1/s)</b><br><small id="erecharge-price">🪙 300</small>
+            </button>
+            <label class="shop-btn" style="text-align: center; cursor: pointer;">
+                <b>Rasm qo'yish (50k)</b><br><small>Galereyadan tanlash</small>
+                <input type="file" id="image-input" accept="image/*" style="display: none;">
+            </label>
         </div>
+        <div></div>
     </div>
 
-    <div id="tab-daily" class="tab-content">
-        <div class="page-title">📅 Kundalik Bonus</div>
-        <p style="font-size: 14px; color: #ccc;">Har 24 soatda 1 marta kirib bepul bonus oling!</p>
+    <div id="tab-tasks" class="tab-content">
+        <h2 style="margin-top: 10px; color: #38bdf8;">Vazifalar</h2>
         <div class="list-container">
             <div class="list-item">
-                <div style="text-align: left;"><b>🎁 Bugungi bonus</b><br><small>+2,500 tanga</small></div>
+                <div style="text-align: left;">
+                    <b>📅 Kunlik bonus</b><br><small>Har 24 soatda +2,500 tanga</small>
+                </div>
                 <button class="list-btn" id="daily-btn" onclick="claimDailyReward()">Olish</button>
             </div>
+            <div class="list-item">
+                <div style="text-align: left;">
+                    📢 <b>Telegram kanalga a'zo bo'lish</b><br><small>+5,000 tanga</small>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <a href="https://t.me/anime_team_01" target="_blank" class="list-btn" style="text-decoration: none;">O'tish</a>
+                    <button class="list-btn" id="task1-btn" onclick="completeTask(1, 5000)">Tekshirish</button>
+                </div>
+            </div>
         </div>
+        <div></div>
     </div>
 
-    <div id="tab-leaders" class="tab-content">
-        <div class="page-title">🏆 Peshqadamlar</div>
+    <div id="tab-friends" class="tab-content">
+        <h2 style="margin-top: 10px; color: #38bdf8;">Do'stlarni taklif qilish</h2>
         <div class="list-container">
-            <div class="list-item"><span>🥇 1. Alex</span><b>1,250,000</b></div>
-            <div class="list-item"><span>🥈 2. Jamshid</span><b>890,000</b></div>
-            <div class="list-item"><span>🥉 3. Sardor</span><b>450,000</b></div>
-            <div class="list-item" style="border: 1px solid #f1c40f;"><span id="user-rank">👑 Owner (You)</span><b id="user-leader-score">0</b></div>
+            <div class="list-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                <b>👥 Har bir do'st uchun</b>
+                <span style="font-size: 13px; color: #94a3b8;">Siz va do'stingiz +10,000 tanga olasiz!</span>
+                <button class="list-btn" style="width: 100%;" onclick="copyRefLink()">Havolani nusxalash</button>
+            </div>
+        </div>
+        <div></div>
+    </div>
+
+    <div class="modal" id="admin-modal">
+        <div class="modal-content">
+            <h2>ADMIN PANEL</h2>
+            <button class="modal-btn" onclick="adminAddCoins()">+100,000 Tanga</button>
+            <button class="modal-btn" style="background:#f59e0b;" onclick="adminMaxEnergy()">Cheksiz Energiya</button>
+            <button class="modal-btn" style="background:#ef4444;" onclick="closeAdminModal()">Yopish</button>
         </div>
     </div>
 
-    <div class="bottom-nav">
-        <button class="nav-btn active" onclick="switchTab('game', this)"><span>🎮</span>O'yin</button>
-        <button class="nav-btn" onclick="switchTab('tasks', this)"><span>📋</span>Vazifalar</button>
-        <button class="nav-btn" onclick="switchTab('daily', this)"><span>📅</span>Bonus</button>
-        <button class="nav-btn" onclick="switchTab('leaders', this)"><span>🏆</span>Reyting</button>
+    <div class="nav">
+        <button class="nav-btn active" onclick="switchTab('tab-game', this)">🎮 O'yin</button>
+        <button class="nav-btn" onclick="switchTab('tab-shop', this)">🛒 Do'kon</button>
+        <button class="nav-btn" onclick="switchTab('tab-tasks', this)">📋 Vazifalar</button>
+        <button class="nav-btn" onclick="switchTab('tab-friends', this)">👥 Do'stlar</button>
     </div>
-
     <script>
-        const ADMIN_PASSWORD = "7777"; // Admin Paroli
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playClickSound(freq = 600) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.08);
-        }
-
         let score = parseInt(localStorage.getItem('h_score')) || 0;
         let bonusPower = parseInt(localStorage.getItem('h_bpower')) || 0;
         let maxEnergy = parseInt(localStorage.getItem('h_maxenergy')) || 1000;
         let energy = parseInt(localStorage.getItem('h_energy')) || maxEnergy;
-        let rechargeSpeed = parseInt(localStorage.getItem('h_recharge')) || 3;
-
+        let rechargeSpeed = parseInt(localStorage.getItem('h_recharge')) || 1;
         let boostPrice = parseInt(localStorage.getItem('h_bprice')) || 500;
         let autoPrice = parseInt(localStorage.getItem('h_aprice')) || 1000;
         let elimitPrice = parseInt(localStorage.getItem('h_elprice')) || 500;
         let erechargePrice = parseInt(localStorage.getItem('h_erprice')) || 300;
         let autoLevel = parseInt(localStorage.getItem('h_autolvl')) || 0;
         let customImage = localStorage.getItem('h_custom_img') || null;
-
         let lastDaily = parseInt(localStorage.getItem('h_last_daily')) || 0;
-        let task1Done = localStorage.getItem('h_task1') || false;
+        let task1Done = localStorage.getItem('h_task1') === 'true';
 
         const levels = [
-            { name: "Bronze 🥉", req: 2500 },
-            { name: "Silver 🥈", req: 10000 },
-            { name: "Gold 🥇", req: 25000 },
-            { name: "Platinum 💎", req: 50000 },
-            { name: "Legendary 👑", req: 100000 }
+            { name: "Bronza 🥉", req: 0 },
+            { name: "Kumush 🥈", req: 10000 },
+            { name: "Oltin 🥇", req: 25000 },
+            { name: "Platina 💎", req: 50000 },
+            { name: "Afsonaviy 👑", req: 100000 }
         ];
 
-        let currentLvlIndex = 0;
-        let tapPower = 1;
-
-        if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.expand();
-        }
-
-        // Secret Admin Panel Activation
-        let clickCount = 0;
-        let clickTimer;
-        document.getElementById('admin-trigger').addEventListener('click', function() {
-            clickCount++;
-            clearTimeout(clickTimer);
-            clickTimer = setTimeout(() => { clickCount = 0; }, 2000);
-
-            if (clickCount >= 5) {
-                clickCount = 0;
-                let pass = prompt("Admin parolini kiriting:");
-                if (pass === ADMIN_PASSWORD) {
-                    document.getElementById('admin-modal').style.display = 'flex';
-                } else if (pass !== null) {
-                    alert("Noto'g'ri parol!");
-                }
-            }
-        });
-
-        function closeAdminPanel() {
-            document.getElementById('admin-modal').style.display = 'none';
-        }
-
-        function adminAddCoins() {
-            score += 100000;
-            updateUI();
-            alert("+100,000 tanga qo'shildi!");
-        }
-
-        function adminFullEnergy() {
-            maxEnergy = 999999;
-            energy = 999999;
-            updateUI();
-            alert("Energiyangiz cheksiz qilindi!");
-        }
-
-        function adminMaxLevel() {
-            score = 100000;
-            updateUI();
-            alert("Legendary Level'ga o'tdingiz!");
-        }
-
-        function switchTab(tabId, btn) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
-            btn.classList.add('active');
-            updateUI();
-        }
+        let tapPower = 1 + bonusPower;
 
         function updateUI() {
-            currentLvlIndex = 0;
-            let prevReq = 0;
-            for (let i = 0; i < levels.length; i++) {
-                if (score >= levels[i].req) {
-                    currentLvlIndex = i + 1;
-                    prevReq = levels[i].req;
-                } else break;
-            }
-
-            let lvlIdx = Math.min(currentLvlIndex, levels.length - 1);
-            document.getElementById('level-name').innerText = levels[lvlIdx].name;
-            document.getElementById('level-num').innerText = currentLvlIndex + 1;
-
-            tapPower = (currentLvlIndex + 1) + bonusPower;
-
             document.getElementById('score').innerText = score.toLocaleString();
-            document.getElementById('user-leader-score').innerText = score.toLocaleString();
             document.getElementById('energy').innerText = energy;
-            document.getElementById('max-energy').innerText = maxEnergy.toLocaleString();
-            document.getElementById('energy-fill').style.width = Math.min(100, (energy / maxEnergy * 100)) + '%';
+            document.getElementById('max-energy').innerText = maxEnergy;
+            document.getElementById('energy-fill').style.width = Math.min(100, (energy / maxEnergy) * 100) + '%';
             
-            document.getElementById('boost-price').innerText = boostPrice.toLocaleString();
-            document.getElementById('auto-price').innerText = autoPrice.toLocaleString();
-            document.getElementById('elimit-price').innerText = elimitPrice.toLocaleString();
-            document.getElementById('erecharge-price').innerText = erechargePrice.toLocaleString();
-            
-            if (autoLevel > 0) document.getElementById('auto-status').innerText = '+' + autoLevel + '/s';
+            document.getElementById('boost-price').innerText = '🪙 ' + boostPrice.toLocaleString();
+            document.getElementById('auto-price').innerText = '🪙 ' + autoPrice.toLocaleString();
+            document.getElementById('elimit-price').innerText = '🪙 ' + elimitPrice.toLocaleString();
+            document.getElementById('erecharge-price').innerText = '🪙 ' + erechargePrice.toLocaleString();
 
-            let nextReq = levels[lvlIdx].req;
+            let lvlIdx = 0;
+            for (let i = 0; i < levels.length; i++) {
+                if (score >= levels[i].req) lvlIdx = i;
+            }
+            document.getElementById('level-num').innerText = lvlIdx + 1;
+            document.getElementById('level-name').innerText = levels[lvlIdx].name;
+
+            let prevReq = levels[lvlIdx].req;
+            let nextReq = levels[lvlIdx + 1] ? levels[lvlIdx + 1].req : prevReq + 50000;
             let progress = Math.min(100, Math.max(0, ((score - prevReq) / (nextReq - prevReq)) * 100));
             document.getElementById('level-fill').style.width = progress + '%';
+            document.getElementById('level-req').innerText = score.toLocaleString() + ' / ' + nextReq.toLocaleString();
 
             if (score >= 50000) {
-                document.getElementById('upload-label').style.display = 'inline-block';
+                document.getElementById('image-input').parentElement.style.display = 'block';
                 if (customImage) {
                     document.getElementById('coin-emoji').style.display = 'none';
                     document.getElementById('coin-img').src = customImage;
                     document.getElementById('coin-img').style.display = 'block';
                 }
-            } else {
-                document.getElementById('upload-label').style.display = 'none';
-                document.getElementById('coin-emoji').style.display = 'block';
-                document.getElementById('coin-img').style.display = 'none';
             }
 
             const now = new Date().getTime();
             const dailyBtn = document.getElementById('daily-btn');
-            const cooldown = 86400000;
-
-            if (now - lastDaily < cooldown) {
+            if (now - lastDaily < 86400000) {
                 dailyBtn.disabled = true;
-                let timeLeft = cooldown - (now - lastDaily);
+                let timeLeft = 86400000 - (now - lastDaily);
                 let hours = Math.floor(timeLeft / (1000 * 60 * 60));
                 let minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                dailyBtn.innerText = hours + "s " + minutes + "d qoldi";
+                dailyBtn.innerText = hours + 's ' + minutes + 'd';
             } else {
                 dailyBtn.disabled = false;
                 dailyBtn.innerText = "Olish";
@@ -467,9 +247,16 @@
             localStorage.setItem('h_autolvl', autoLevel);
         }
 
-                function buyMultitap() {
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function buyMultitap() {
             if (score >= boostPrice) {
-                score -= boostPrice; bonusPower += 1;
+                score -= boostPrice; bonusPower += 1; tapPower = 1 + bonusPower;
                 boostPrice = Math.floor(boostPrice * 2.2); updateUI();
             } else alert("Tangalar yetarli emas!");
         }
@@ -498,8 +285,7 @@
         function claimDailyReward() {
             const now = new Date().getTime();
             if (now - lastDaily >= 86400000) {
-                score += 2500;
-                lastDaily = now;
+                score += 2500; lastDaily = now;
                 localStorage.setItem('h_last_daily', lastDaily);
                 alert("Tabriklaymiz! +2,500 kunlik bonus olindi!");
                 updateUI();
@@ -515,7 +301,7 @@
         }
 
         function copyRefLink() {
-            navigator.clipboard.writeText("https://t.me/botingiz_username?start=ref");
+            navigator.clipboard.writeText("https://t.me/my_tap_clicker_game_bot?start=ref");
             alert("Taklif havolasi nusxalandi!");
         }
 
@@ -532,16 +318,13 @@
             }
         });
 
-        // TASODIFIY BOMBA (-2X) PAYDO BO'LISHI
         const bombCoin = document.getElementById('bomb-coin');
         function spawnBomb() {
             if (document.getElementById('tab-game').classList.contains('active')) {
                 const x = Math.floor(Math.random() * (window.innerWidth - 80));
                 const y = Math.floor(Math.random() * (window.innerHeight - 250)) + 100;
-                bombCoin.style.left = x + 'px';
-                bombCoin.style.top = y + 'px';
+                bombCoin.style.left = x + 'px'; bombCoin.style.top = y + 'px';
                 bombCoin.style.display = 'flex';
-
                 setTimeout(() => { bombCoin.style.display = 'none'; }, 3000);
             }
         }
@@ -550,10 +333,8 @@
         bombCoin.addEventListener('click', function() {
             let penalty = tapPower * 2;
             score = Math.max(0, score - penalty);
-            playClickSound(100);
             createFloatingText(parseInt(bombCoin.style.left), parseInt(bombCoin.style.top), '-' + penalty, '#ff4d4d');
-            bombCoin.style.display = 'none';
-            updateUI();
+            bombCoin.style.display = 'none'; updateUI();
         });
 
         const coinEl = document.getElementById('coin');
@@ -571,12 +352,9 @@
         function handleTap(x, y) {
             if (energy >= tapPower) {
                 score += tapPower; energy -= tapPower;
-                playClickSound(600);
-
                 if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
                     window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
                 }
-
                 createFloatingText(x, y, '+' + tapPower, '#ffffff');
                 updateUI();
             }
@@ -584,14 +362,25 @@
 
         function createFloatingText(x, y, text, color = '#ffffff') {
             const el = document.createElement('div');
-            el.className = 'float-text';
-            el.innerText = text;
-            el.style.color = color;
-            el.style.left = (x - 15) + 'px';
-            el.style.top = (y - 30) + 'px';
+            el.className = 'float-text'; el.innerText = text; el.style.color = color;
+            el.style.left = (x - 15) + 'px'; el.style.top = (y - 30) + 'px';
             document.body.appendChild(el);
             setTimeout(() => { el.remove(); }, 800);
         }
+
+        let clickCount = 0; let clickTimer;
+        function openAdminModal() {
+            clickCount++;
+            clearTimeout(clickTimer);
+            clickTimer = setTimeout(() => { clickCount = 0; }, 2000);
+            if (clickCount >= 5) {
+                clickCount = 0;
+                document.getElementById('admin-modal').style.display = 'flex';
+            }
+        }
+        function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
+        function adminAddCoins() { score += 100000; updateUI(); closeAdminModal(); }
+        function adminMaxEnergy() { energy = maxEnergy; updateUI(); closeAdminModal(); }
 
         setInterval(() => {
             if (autoLevel > 0) score += autoLevel;
