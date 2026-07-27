@@ -6,7 +6,315 @@
     <title>Clicker Game Ultimate</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #0f172a;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        .header {
+            text-align: center;
+            width: 100%;
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .profile-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #1e293b;
+            padding: 8px 15px;
+            border-radius: 15px;
+            border: 1px solid #334155;
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .avatar-box {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #334155;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #38bdf8;
+            flex-shrink: 0;
+        }
+
+        .avatar-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-box input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .profile-info {
+            text-align: left;
+            overflow: hidden;
+        }
+
+        .profile-name {
+            font-weight: bold;
+            font-size: 15px;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .level-card {
+            background: #1e293b;
+            width: 100%;
+            max-width: 360px;
+            padding: 10px 15px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #334155;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            width: 100%;
+            max-width: 360px;
+            background: #334155;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: #38bdf8;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .score-board {
+            font-size: 38px;
+            font-weight: bold;
+            color: #38bdf8;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .coin-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .coin {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #38bdf8 0%, #0369a1 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 40px rgba(56, 189, 248, 0.4);
+            cursor: pointer;
+            transition: transform 0.1s;
+            border: 5px solid #7dd3fc;
+            touch-action: manipulation;
+        }
+
+        .coin:active {
+            transform: scale(0.92);
+        }
+
+        .coin span {
+            font-size: 75px;
+            pointer-events: none;
+        }
+
+        .energy-container {
+            width: 100%;
+            max-width: 320px;
+            margin-top: auto;
+            padding-bottom: 10px;
+        }
+
+        .energy-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+
+        .energy-bar {
+            width: 100%;
+            background: #1e293b;
+            height: 14px;
+            border-radius: 7px;
+            overflow: hidden;
+            border: 1px solid #334155;
+        }
+
+        .energy-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #f59e0b, #ef4444);
+            transition: width 0.2s;
+        }
+
+        .list-container {
+            width: 100%;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .list-item {
+            background: #1e293b;
+            padding: 14px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #334155;
+        }
+
+        .list-btn {
+            background: #0284c7;
+            color: #fff;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .list-btn:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+
+        .nav {
+            display: flex;
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            height: 65px;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .nav-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            gap: 5px;
+        }
+
+        .nav-btn.active {
+            color: #38bdf8;
+            font-weight: bold;
+        }
+
+        .float-text {
+            position: absolute;
+            font-size: 26px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 0.8s forwards;
+            z-index: 100;
+            color: #38bdf8;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px);
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 20px;
+            width: 85%;
+            max-width: 320px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+    </style>
 </head>
 <body>
 
@@ -124,315 +432,9 @@
         <button class="nav-btn" onclick="switchTab('tab-leaderboard', this); loadLeaderboard();">🏆 Top</button>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script_backend.js"></script>
 </body>
-                </html>
-                * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    user-select: none;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-body {
-    background: #0f172a;
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
-}
-
-.tab-content {
-    display: none;
-    flex: 1;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    overflow-y: auto;
-}
-
-.tab-content.active {
-    display: flex;
-}
-
-.header {
-    text-align: center;
-    width: 100%;
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-.profile-container {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: #1e293b;
-    padding: 8px 15px;
-    border-radius: 15px;
-    border: 1px solid #334155;
-    width: 100%;
-    max-width: 360px;
-}
-
-.avatar-box {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: #334155;
-    overflow: hidden;
-    position: relative;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #38bdf8;
-    flex-shrink: 0;
-}
-
-.avatar-box img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.avatar-box input {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.profile-info {
-    text-align: left;
-    overflow: hidden;
-}
-
-.profile-name {
-    font-weight: bold;
-    font-size: 15px;
-    color: #fff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.level-card {
-    background: #1e293b;
-    width: 100%;
-    max-width: 360px;
-    padding: 10px 15px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border: 1px solid #334155;
-    cursor: pointer;
-}
-
-.progress-bar {
-    width: 100%;
-    max-width: 360px;
-    background: #334155;
-    height: 8px;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    background: #38bdf8;
-    height: 100%;
-    width: 0%;
-    transition: width 0.3s;
-}
-
-.score-board {
-    font-size: 38px;
-    font-weight: bold;
-    color: #38bdf8;
-    margin: 10px 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-
-.coin-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 20px 0;
-}
-
-.coin {
-    width: 220px;
-    height: 220px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #38bdf8 0%, #0369a1 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 40px rgba(56, 189, 248, 0.4);
-    cursor: pointer;
-    transition: transform 0.1s;
-    border: 5px solid #7dd3fc;
-    touch-action: manipulation;
-}
-
-.coin:active {
-    transform: scale(0.92);
-}
-
-.coin span {
-    font-size: 75px;
-    pointer-events: none;
-}
-
-.energy-container {
-    width: 100%;
-    max-width: 320px;
-    margin-top: auto;
-    padding-bottom: 10px;
-}
-
-.energy-info {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-    color: #94a3b8;
-    margin-bottom: 5px;
-}
-
-.energy-bar {
-    width: 100%;
-    background: #1e293b;
-    height: 14px;
-    border-radius: 7px;
-    overflow: hidden;
-    border: 1px solid #334155;
-}
-
-.energy-fill {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, #f59e0b, #ef4444);
-    transition: width 0.2s;
-}
-
-.list-container {
-    width: 100%;
-    max-width: 360px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 10px;
-}
-
-.list-item {
-    background: #1e293b;
-    padding: 14px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border: 1px solid #334155;
-}
-
-.list-btn {
-    background: #0284c7;
-    color: #fff;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: bold;
-    text-decoration: none;
-    font-size: 14px;
-}
-
-.list-btn:disabled {
-    background: #475569;
-    cursor: not-allowed;
-}
-
-.nav {
-    display: flex;
-    background: #1e293b;
-    border-top: 1px solid #334155;
-    height: 65px;
-    padding-bottom: env(safe-area-inset-bottom);
-}
-
-.nav-btn {
-    flex: 1;
-    background: none;
-    border: none;
-    color: #94a3b8;
-    font-size: 11px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    gap: 5px;
-}
-
-.nav-btn.active {
-    color: #38bdf8;
-    font-weight: bold;
-}
-
-.float-text {
-    position: absolute;
-    font-size: 26px;
-    font-weight: bold;
-    pointer-events: none;
-    animation: floatUp 0.8s forwards;
-    z-index: 100;
-    color: #38bdf8;
-}
-
-@keyframes floatUp {
-    0% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-100px);
-    }
-}
-
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.85);
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background: #1e293b;
-    padding: 25px;
-    border-radius: 20px;
-    width: 85%;
-    max-width: 320px;
-    text-align: center;
-    border: 1px solid #334155;
-}
+</html>
 // Telegram WebApp sozlash
 if (window.Telegram && window.Telegram.WebApp) {
     window.Telegram.WebApp.ready();
@@ -749,4 +751,4 @@ setInterval(() => {
 }, 1000);
 
 updateUI();
-    
+        
